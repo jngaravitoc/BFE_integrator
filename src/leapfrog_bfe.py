@@ -18,18 +18,24 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s):
 
     Input:
     ------
-        x_i: float
+        x_i : float
             x component of the intial position of the test particle.
-        y_i: float
+        y_i : float
             y component of the intial position of the test particle.
-        z_i: float
+        z_i : float
             z component of the intial position of the test particle.
-        vx_i: float
+        vx_i : float
             vx component of the intial velocity of the test particle.
-        vy_i: float
+        vy_i : float
             vy component of the intial velocity of the test particle.
         vz_i: float
             vz component of the intial velocity of the test particle.
+        time : float
+            total time for the integration
+        Mass : float
+            Total mass of the Hernquist halo.
+        r_s : float
+            Scale lenght of the Hernquist halo.
     """
 
     # h is the time step
