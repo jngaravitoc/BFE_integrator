@@ -13,6 +13,13 @@ def disk_bulge_a(x, y, z):
 
 def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s):
     """
+    Orbit integrator around a Hernquist potential using the
+    leapfdrog algorithm.
+
+    Input:
+    ------
+        x_i: float
+            x coordinate of the intial position of the test particle.
     """
 
     # h is the time step
