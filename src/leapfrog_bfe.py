@@ -1,7 +1,7 @@
 import numpy as np
 from astropy import units, constants
 import biff
-from octopus.profiles import a_hernquist, a_mn
+from soda.profiles import a_hernquist, a_mn
 
 def disk_bulge_a(x, y, z):
     a_bulge = a_hernquist(0.7, x, y, z, 1.0E10)
