@@ -118,12 +118,43 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s, disk=0):
 
     return t, x, y, z, vx, vy, vz
 
-def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, disk=0):
+def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt, disk=0):
     """
+    Orbit integration function for the BFE methods.
+    the time evolution uses a leapfrog algorithm.
+    Accelerations from the coefficients are computed with biff.
+
+    Parameters:
+    -----------
+    x_i : initial particle coordinate in kpc.
+    x_i : initial particle coordinate in kpc.
+    x_i : initial particle coordinate in kpc.
+    vx_i : initial particle coordinate in km/s.
+    vy_i : initial particle coordinate in km/s.
+    vz_i : initial particle coordinate in km/s.
+    time : total time of integration.
+    S : Matrix with the coefficients Snlm
+    T : Matrix with the coefficients Tnlm
+    G : gravitational constant in units of kpc/s
+    Mass : 
+    R_s : Dark Matter halo scale lenght
+    dt : time step between integration points.
+    disk : if a disk is present disk=1, default disk=0
+
+    Returns:
+    --------
+
+    to - do:
+    --------
+    1. Backwards integration.
+    2. Combine both the orbit integration functions, the time
+       dependent and the time independent.
+    3. Include the LMC
+
     """
     ## put h as an input parameter
     # h is the time step
-    h = -0.001
+    h = -dt
     n_points = int(time / np.abs(h))
 
     #from kpc/gyrs to km/s
