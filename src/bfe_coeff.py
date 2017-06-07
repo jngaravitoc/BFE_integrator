@@ -72,6 +72,26 @@ def snap_times_nbody(path, snap_name, N_initial):
         dt = readheader(path+snap_name+'_{:03d}'.format(i+1), 'time') - readheader(path+snap_name+'_{:03d}'.format(i), 'time')
         return dt
 
+def disk_bulge(path,  snap_name, N_initial):
+    """
+    See is there are disk or bulge particles!
+
+    """
+    n_diskpart = readheader(path + snap_name + "_{:03d}".format(N_initial), 'diskcount')
+    n_bulgepart = readheader(path + snap_name + "_{:03d}".format(N_initial), 'bulgecount')
+
+    if (n_diskpart == 0):
+        disk = 0
+    else:
+        disk = 1
+
+    if (n_bulgepart == 0):
+        bulge = 0
+    else:
+        bulge = 1
+
+    return disk, bulge
+
 def compute_coeffs_from_snaps(path, snap_name, N_initial, \
                               N_final, Nmax, Lmax, r_s, disk=0):
     """
@@ -258,16 +278,22 @@ if __name__ == "__main__":
         print('Time between snapshots {:.2f} less than required time of orbit integration {:.2f}'.format(t_nbody, time))
         exit(0)
 
+
+
+    disk, bulge = disk_bulge(path, snap_name, init_snap)
+    print('disk, bulge', disk, bulge)
+
     # Computing coefficients.
     print('Computing BFE coefficients')
-    S_nlm, T_nlm = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s)
+    S_nlm, T_nlm = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s, disk)
 
     print('Interpolating coefficients')
     S_interp, T_interp = interpolate_coeff(S_nlm, T_nlm, dt_nbody, interp_dt, init_snap, final_snap, nmax, lmax)
 
     ## Integrating orbit in time-evolving potential.
+
     print('integrating orbit')
-    t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp, T_interp, G_c.value*g_fact, M, r_s, interp_dt)
+    t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp, T_interp, G_c.value*g_fact, M, r_s, interp_dt, disk)
 
     print('Writing data')
     print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, orbit_name)

@@ -4,14 +4,14 @@ import biff
 from soda.profiles import a_hernquist, a_mn
 
 def disk_bulge_a(x, y, z):
-    a_bulge = a_hernquist(0.7, x, y, z, 1.0E10)
-    a_disk = a_mn(0.638, 1.7, x, y, z, 4.1E10)
+    a_bulge = a_hernquist(0.7, x, y, z, 1.4E10)
+    a_disk = a_mn(0.638, 1.7, x, y, z, 5.78E10)
     ax = a_bulge[0] + a_disk[0]
     ay = a_bulge[1] + a_disk[1]
     az = a_bulge[2] + a_disk[2]
     return ax, ay, az
 
-def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s):
+def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s, disk=0):
     """
     Orbit integrator around a Hernquist potential using the
     leapfdrog algorithm.
@@ -61,9 +61,15 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s):
     r = np.zeros((1,3))
     r[0] = np.array([x[0], y[0], z[0]])
 
-    ax[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[0]# + disk_bulge_a(x[0], y[0], z[0])[0]
-    ay[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[1]# + disk_bulge_a(x[0], y[0], z[0])[1]
-    az[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[2]# + disk_bulge_a(x[0], y[0], z[0])[2]
+    if (disk==1):
+        ax[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[0] + disk_bulge_a(x[0], y[0], z[0])[0]
+        ay[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[1] + disk_bulge_a(x[0], y[0], z[0])[1]
+        az[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[2] + disk_bulge_a(x[0], y[0], z[0])[2]
+
+    elif (disk==0):
+        ax[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[0]
+        ay[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[1]
+        az[0] = a_hernquist(R_s, x[0], y[0], z[0], Mass)[2]
 
     # half step
     # Here I assume the host galaxy starts at position (0, 0, 0) and then its
@@ -77,9 +83,15 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s):
     vy[1] = vy[0] - h * ay[0]
     vz[1] = vz[0] - h * az[0]
 
-    ax[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[0]# + disk_bulge_a(x[1], y[1], z[1])[0]
-    ay[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[1]# + disk_bulge_a(x[1], y[1], z[1])[1]
-    az[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[2]# + disk_bulge_a(x[1], y[1], z[1])[2]
+    if (disk==1):
+        ax[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[0] + disk_bulge_a(x[1], y[1], z[1])[0]
+        ay[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[1] + disk_bulge_a(x[1], y[1], z[1])[1]
+        az[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[2] + disk_bulge_a(x[1], y[1], z[1])[2]
+
+    if (disk==0):
+        ax[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[0]
+        ay[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[1]
+        az[1] = a_hernquist(R_s, x[1], y[1], z[1], Mass)[2]
 
     for i in range(2, len(x)):
         t[i] = t[i-1] - h
@@ -94,13 +106,19 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s):
         r = np.zeros((1,3))
         r[0] = np.array([x[i], y[i], z[i]])
 
-        ax[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[0]# + disk_bulge_a(x[i], y[i], z[i])[0]
-        ay[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[1]# + disk_bulge_a(x[i], y[i], z[i])[1]
-        az[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[2]# + disk_bulge_a(x[i], y[i], z[i])[2]
+        if (disk==1):
+            ax[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[0] + disk_bulge_a(x[i], y[i], z[i])[0]
+            ay[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[1] + disk_bulge_a(x[i], y[i], z[i])[1]
+            az[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[2] + disk_bulge_a(x[i], y[i], z[i])[2]
+
+        if (disk==0):
+            ax[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[0]
+            ay[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[1]
+            az[i] = a_hernquist(R_s, x[i], y[i], z[i], Mass)[2]
 
     return t, x, y, z, vx, vy, vz
 
-def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
+def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, disk=0):
     """
     """
     ## put h as an input parameter
@@ -138,10 +156,15 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
     r = np.zeros((1,3))
     r[0] = np.array([x[0], y[0], z[0]])
 
-    ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[0], y[0],z[0])[0]
-    ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[0],y[0],z[0])[1]
-    az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[0], y[0], z[0])[2]
+    if (disk==0):
+        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value
+        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value
+        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value
 
+    if (disk==1):
+        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[0]
+        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[1]
+        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[2]
     # half step
     # Here I assume the host galaxy starts at position (0, 0, 0) and then its
     # initial v[1] is (0, 0, 0)
@@ -156,9 +179,15 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
 
     r[0] = np.array([x[1], y[1], z[1]])
 
-    ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[1], y[1], z[1])[0]
-    ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[1], y[1], z[1])[1]
-    az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[1], y[1], z[1])[2]
+    if (disk==0):
+        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value
+        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value
+        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value
+
+    if (disk==1):
+        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[0]
+        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[1]
+        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[2]
 
     for i in range(2, len(x)):
         t[i] = t[i-1] - h
@@ -173,21 +202,27 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
         r = np.zeros((1,3))
         r[0] = np.array([x[i], y[i], z[i]])
 
-        ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] * convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[i], y[i], z[i])[0]
-        ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] * convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[i], y[i], z[i])[1]
-        az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] * convtokpc_gyr2.value# * np.sqrt(4*np.pi)/1.5 + disk_bulge_a(x[i], y[i], z[i])[2]
+        if (disk==0):
+            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] * convtokpc_gyr2.value
+            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] * convtokpc_gyr2.value
+            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] * convtokpc_gyr2.value
+
+        if (disk==1):
+            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[0]
+            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[1]
+            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[2]
 
     return t, x, y, z, vx, vy, vz
 
 
-def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
+def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt, disk=0):
     """
 
     Function that computes 
     """
-    h = -0.001
+    h = -dt
     n_points = int(time * 1/abs(h))
-    #factor = 1/1.5
+
     #from kpc/gyrs to km/s
     convtokms = 1 * units.kpc / units.Gyr
     convtokms = convtokms.to(units.km/units.s)
@@ -221,10 +256,15 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
     r[0] = np.array([x[0], y[0], z[0]])
 
 
-    ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0] * convtokpc_gyr2.value#*factor + disk_bulge_a(x[0], y[0], z[0])[0]
-    ay[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][1] * convtokpc_gyr2.value#*factor  + disk_bulge_a(x[0], y[0], z
-    az[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][2] * convtokpc_gyr2.value#*factor  + disk_bulge_a(x[0], y[0], z[0])[2]
+    if (disk==0):
+        ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0] * convtokpc_gyr2.value
+        ay[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][1] * convtokpc_gyr2.value
+        az[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][2] * convtokpc_gyr2.value
 
+    if (disk==1):
+        ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0] * convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[0]
+        ay[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][1] * convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[1]
+        az[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][2] * convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[2]
     # half step
     # Here I assume the host galaxy starts at position (0, 0, 0) and then its
     # initial v[1] is (0, 0, 0)
@@ -239,9 +279,17 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
 
     r[0] = np.array([x[1], y[1], z[1]])
 
-    ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0]* convtokpc_gyr2.value#*factor + disk_bulge_a(x[1], y[1], z[1])[0]
-    ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1]* convtokpc_gyr2.value#*factor + disk_bulge_a(x[1], y[1], z[1])[1]
-    az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2]* convtokpc_gyr2.value#*factor + disk_bulge_a(x[1], y[1], z[1])[2]
+    if (disk==0):
+
+        ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0]* convtokpc_gyr2.value
+        ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1]* convtokpc_gyr2.value
+        az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2]* convtokpc_gyr2.value
+
+    if (disk==1):
+
+        ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[0]
+        ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[1]
+        az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[2]
 
     for i in range(2, n_points):
         t[i] = t[i-1] - h
@@ -254,9 +302,15 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s):
         vz[i] = vz[i-2] - 2 * h * az[i-1]
 
         r[0] = np.array([x[i], y[i], z[i]])
+        if (disk==0):
+            ax[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][0] * convtokpc_gyr2.value
+            ay[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][1] * convtokpc_gyr2.value
+            az[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][2] * convtokpc_gyr2.value
 
-        ax[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][0] * convtokpc_gyr2.value#*factor  + disk_bulge_a(x[i], y[i], z[i])[0]
-        ay[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][1] * convtokpc_gyr2.value#*factor  + disk_bulge_a(x[i], y[i], z[i])[1]
-        az[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][2] * convtokpc_gyr2.value#*factor  + disk_bulge_a(x[i], y[i], z[i])[2]
+        if (disk==1):
+            ax[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][0] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[0]
+            ay[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][1] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[1]
+            az[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][2] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[2]
+
 
     return t, x, y, z, vx, vy, vz
