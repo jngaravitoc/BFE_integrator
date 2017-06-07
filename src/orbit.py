@@ -40,9 +40,6 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
             for different dt values.
     """
 
-    # total time
-    time = (N_final - N_initial) * dt_nbody
-
     # time arrays
     time_array = np.linspace(0, time, time/dt_nbody)
     time_array_new = np.linspace(0, time, time/dt_int)
@@ -64,7 +61,7 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
 
 def read_coefficients(path, tmax, nmax, lmax):
 
-    ST = np.linspace(path)
+    ST = np.loadtxt(path)
 
     S = ST[:,0]
     T = ST[:,1]
