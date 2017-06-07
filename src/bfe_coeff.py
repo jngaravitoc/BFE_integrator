@@ -188,8 +188,7 @@ def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, file_name):
     f = open(file_name, 'w')
     f.write('#t_orb (Gyrs), x (kpc), y(kpc), z(kpc), vx(km/s), vy(km/s), vz(km/s) \n')
     for i in range(len(t_orb)):
-        print(i)
-        f.write("{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} \n".format(t_orb[i], x_orb[i], y_orb[i], z_orb[i], vx_orb[i], vy_orb[i], vz_orb[i]))
+        f.write("{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} \n".format(t_orb[i], x_orb[i], y_orb[i], z_orb[i], vx_orb[i], vy_orb[i], vz_orb[i]))
 
     f.close()
 
@@ -201,14 +200,14 @@ if __name__ == "__main__":
         print('')
         print('Usage:')
         print('------')
-        print('x_init : cartesian initial x-coordinate of the test particle')
-        print('y_init : cartesian initial y-coordinate of the test particle')
-        print('z_init : cartesian initial z-coordinate of the test particle')
-        print('vx_init : cartesian initial vx-coordinate of the test particle')
-        print('vy_init : cartesian initial vy-coordinate of the test particle')
-        print('vz_init : cartesian initial vz-coordinate of the test particle')
+        print('x_init : cartesian initial x-coordinate of the test particle in kpc')
+        print('y_init : cartesian initial y-coordinate of the test particle in kpc')
+        print('z_init : cartesian initial z-coordinate of the test particle in kpc')
+        print('vx_init : cartesian initial vx-coordinate of the test particle in km/s')
+        print('vy_init : cartesian initial vy-coordinate of the test particle in km/s')
+        print('vz_init : cartesian initial vz-coordinate of the test particle in km/s')
         print('Time of integration: total time for the orbit integration in Gyrs. e.g: 2')
-        print('r_s : scale lenght of the halo')
+        print('r_s : scale lenght of the halo in kpc')
         print('nmax')
         print('lmax')
         print('path : path to nbody simulations snapshots')
@@ -246,23 +245,34 @@ if __name__ == "__main__":
 
     M = 1
     G_c = constants.G
+    G_c = G_c.to(u.kiloparsec**3 / (u.s**2 * u.Msun))
     G_c2 = G_c.to(u.kiloparsec**3 / (u.Gyr**2 * u.Msun))
     g_fact = 43007.1/(G_c2.value*1E10)
+
+
+    dt_nbody = snap_times_nbody(path, snap_name, init_snap)
+
+    t_nbody = (final_snap - init_snap)*dt_nbody
+
+    if (t_nbody < time):
+        print('Time between snapshots {:.2f} less than required time of orbit integration {:.2f}'.format(t_nbody, time))
+        exit(0)
 
     # Computing coefficients.
     print('Computing BFE coefficients')
     S_nlm, T_nlm = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s)
 
-    dt_nbody = snap_times_nbody(path, snap_name, init_snap)
-    print('dt: ', dt_nbody)
     print('Interpolating coefficients')
     S_interp, T_interp = interpolate_coeff(S_nlm, T_nlm, dt_nbody, interp_dt, init_snap, final_snap, nmax, lmax)
 
-    ## Integrating orbit in evolving potential.
+    ## Integrating orbit in time-evolving potential.
     print('integrating orbit')
     t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp, T_interp, G_c.value*g_fact, M, r_s, interp_dt)
-    print(t_orb[0], x_orb[0])
+
+    print('Writing data')
     print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, orbit_name)
+
+
     ## Integrating orbit in the potential of a given time -> Generalize this to any time.
     #t_orb_st, x_orb_st, y_orb_st, z_orb_st, vx_orb_st, vy_orb_st, vz_orb_biff_st = leapfrog_bfe.integrate_biff(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp[0], T_interp[0], G_c.value*g_fact, M , r_s)
 
