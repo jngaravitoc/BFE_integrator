@@ -42,7 +42,6 @@ now!
 
 to-do:
 ------
-- Compute coefficients separately.
 - Truncate halo
 - Include the LMC
 
@@ -129,7 +128,7 @@ def disk_bulge(path,  snap_name, N_initial):
     return disk, bulge
 
 def compute_coeffs_from_snaps(path, snap_name, N_initial, \
-                              N_final, Nmax, Lmax, r_s, disk=0):
+                              N_final, Nmax, Lmax, r_s, r_s_lmc =3, disk=0, LMC=0, Nhalo=0):
     """
     Compute the coefficients from a series of snapshots of N-body
     simulations.
@@ -153,7 +152,11 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
     r_s: float
         Halo scale length in kpc.
     disk : int
-        If disk is present disk==1, otherwise disk==0 (default)
+        If disk is present disk==1, otherwise disk==0 (default).
+    LMC : int
+        Is the LMC present? Yes=1, No=0.
+    Nhalo : int
+        Number of MW DM particles.
 
     Return:
     -------
@@ -164,29 +167,51 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
     """
     t = N_final - N_initial
 
-    S = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
-    T = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
+    S_mw = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
+    T_mw = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
+
+    S_lmc = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
+    T_lmc = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
 
     for i in range(N_initial, N_final, 1):
         pos = readsnap(path+snap_name+'_{:03d}'.format(i), 'pos', 'dm')
         mass = readsnap(path+snap_name+'_{:03d}'.format(i), 'mass', 'dm')
+        pids = readsnap(path+snap_name+'_{:03d}'.format(i), 'pid', 'dm')
+
+        if (LMC==1):
+            pos_MW, mass_MW, pos_LMC, mass_LMC = octopus.orbit_cm.MW_LMC_particles(pos, mass, pids, Nhalo)
 
         ## Computing the COM.
 
-        if disk==1:
+        if (disk==1):
             pos_disk = readsnap(path+snap_name+'_{:03d}'.format(i), 'pos', 'disk')
             pot_disk = readsnap(path+snap_name+'_{:03d}'.format(i), 'pot', 'disk')
             rcm, vcm = octopus.CM_disk_potential(pos_disk, pos_disk, pot_disk)
-        elif disk==0:
+
+            if (LMC==1):
+                rlmc, vlmc = octopus.CM(pos_LMC, pos_LMC) # not using velocities!
+
+        elif ((disk==0) & (LMC==0)):
             rcm, vcm = octopus.CM(pos, pos) # not using velocities!
 
+        elif ((disk==0) & (LMC==1)):
+            rcm, vcm = octopus.CM(pos_MW, pos_MW) # not using velocities!
+            rlmc, vlmc = octopus.CM(pos_LMC, pos_LMC) # not using velocities!
+
         ## Re-centering halo.
-        pos_cm = re_center_halo(pos, rcm)
+        if (LMC==1):
+            pos_mw_cm = re_center_halo(pos_MW, rcm)
+            pos_lmc_cm = re_center_halo(pos_LMC, rlmc)
+            S_mw[i], T_mw[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            ############################# change nmax and lmax lMC
+            S_lmc[i], T_lmc[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, 15, 10, r_s)
+            return S_mw, T_mw, S_lmc, T_lmc
 
-        # Computing Coefficients.
-        S[i], T[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
-
-    return S, T
+        elif (LMC==0):
+            pos_cm = re_center_halo(pos, rcm)
+            S_mw[i], T_mw[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            # Computing Coefficients.
+            return S_mw, T_mw, S_lmc, T_lmc
 
 
 
@@ -195,7 +220,7 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
 
 if __name__ == "__main__":
 
-    if(len(sys.argv)!=9):
+    if(len(sys.argv)!=11):
         print('///////////////////////////////////////////////////////////////')
         print('')
         print('Usage:')
@@ -208,6 +233,8 @@ if __name__ == "__main__":
         print('lmax')
         print('r_s : scale lenght of the halo in kpc')
         print('out name : name of the output file with the coefficients')
+        print('LMC')
+        print('Nhalo')
         print('')
         print('////////////////////////////////////////////////////////////////')
         exit(0)
@@ -222,9 +249,11 @@ if __name__ == "__main__":
     nmax = int(sys.argv[5])
     lmax = int(sys.argv[6])
 
-    r_s = float(sys.argv[7])
+    r_s_mw = float(sys.argv[7])
 
     out_name = sys.argv[8]
+    LMC = int(sys.argv[9])
+    Nhalo = int(sys.argv[10])
 
     N_snaps = final_snap - init_snap
     dt_nbody = snap_times_nbody(path, snap_name, init_snap)
@@ -237,9 +266,16 @@ if __name__ == "__main__":
 
     # Computing coefficients.
     print('Computing BFE coefficients')
-    S_nlm, T_nlm = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s, disk)
+    if (LMC==0):
+        r_s_lmc=0
+        S_mw, T_mw = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s_mw, r_s_lmc, disk, LMC, Nhalo)
+        print('Writting coefficients')
+        write_coefficients(S_mw, T_mw, times, 'MW'+out_name, N_snaps ,nmax, lmax, r_s, path)
 
-    print('Writting coefficients')
-    write_coefficients(S_nlm, T_nlm, times, out_name, N_snaps ,nmax, lmax, r_s, path)
-
+    if (LMC==1):
+        r_s_lmc=3
+        S_mw, T_mw, S_lmc, T_lmc = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s_mw, r_s_lmc, disk, LMC, Nhalo)
+        print('Writting coefficients')
+        write_coefficients(S_mw, T_mw, times, 'MW'+ out_name, N_snaps ,nmax, lmax, r_s_mw, path)
+        write_coefficients(S_lmc, T_lmc, times, 'LMC'+ out_name, N_snaps ,nmax, lmax, r_s_lmc, path)
 
