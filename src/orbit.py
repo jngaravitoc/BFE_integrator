@@ -69,14 +69,21 @@ def read_coefficients(path, tmax, nmax, lmax):
     S_nlm = S.reshape(tmax, nmax+1, lmax+1, lmax+1)
     T_nlm = S.reshape(tmax, nmax+1, lmax+1, lmax+1)
 
-    return S_nlm, T_nlm
+    return np.ascontiguousarray(S_nlm), np.ascontiguousarray(T_nlm)
 
 
-def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, file_name):
+def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb,\
+               file_name):
+
     f = open(file_name, 'w')
-    f.write('#t_orb (Gyrs), x (kpc), y(kpc), z(kpc), vx(km/s), vy(km/s), vz(km/s) \n')
+    f.write('#t_orb (Gyrs), x (kpc), y(kpc), z(kpc), vx(km/s),'\
+            'vy(km/s), vz(km/s) \n')
+
+
     for i in range(len(t_orb)):
-        f.write("{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} \n".format(t_orb[i], x_orb[i], y_orb[i], z_orb[i], vx_orb[i], vy_orb[i], vz_orb[i]))
+        f.write("{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} \n"\
+                .format(t_orb[i], x_orb[i], y_orb[i], z_orb[i],\
+                        vx_orb[i], vy_orb[i], vz_orb[i]))
 
     f.close()
 
@@ -84,7 +91,7 @@ def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, file_name):
 if __name__ == "__main__":
 
 
-    if(len(sys.argv)!=16):
+    if(len(sys.argv)!=22):
 
         print('///////////////////////////////////////////////////////////////')
         print('')
@@ -97,7 +104,8 @@ if __name__ == "__main__":
         print('vy_init : cartesian initial vy-coordinate of the test particle in km/s')
         print('vz_init : cartesian initial vz-coordinate of the test particle in km/s')
         print('Time of integration: total time for the orbit integration in Gyrs. e.g: 2')
-        print('interp_dt : interpolated dt time this is going to be the orbit dt')
+        print('interp_dt : this is the time of the integration time step')
+        print('static : No (0), yes (1)')
         print('r_s : scale lenght of the halo in kpc')
         print('nmax')
         print('lmax')
@@ -124,21 +132,21 @@ if __name__ == "__main__":
 
     time = float(sys.argv[7])
     interp_dt = float(sys.argv[8])
+    static = int(sys.argv[9])
+    r_s = float(sys.argv[10])
+    nmax  = int(sys.argv[11])
+    lmax = int(sys.argv[12])
 
-    r_s = float(sys.argv[9])
-    nmax  = int(sys.argv[10])
-    lmax = int(sys.argv[11])
+    path_coeff = sys.argv[13]
+    path_times = sys.argv[14]
+    orbit_name = sys.argv[15]
+    disk = int(sys.argv[16])
 
-    path_coeff = sys.argv[12]
-    path_times = sys.argv[13]
-    orbit_name = sys.argv[14]
-    disk = int(sys.argv[15])
-
-    LMC = int(sys.argv[16])
-    path_coeff_lmc = sys.argv[17]
-    nmax_lmc = int(sys.argv[18])
-    lmax_lmc = int(sys.argv[19])
-    r_s_lmc = float(sys.argv[20])
+    LMC = int(sys.argv[17])
+    path_coeff_lmc = sys.argv[18]
+    nmax_lmc = int(sys.argv[19])
+    lmax_lmc = int(sys.argv[20])
+    r_s_lmc = float(sys.argv[21])
 
     M = 1
     G_c = constants.G
@@ -146,38 +154,94 @@ if __name__ == "__main__":
     G_c2 = G_c.to(u.kiloparsec**3 / (u.Gyr**2 * u.Msun))
     g_fact = 43007.1/(G_c2.value*1E10)
 
+    N_snaps=1
 
-    times_nbody = np.loadtxt(path_times)
+    if (static==0):
+        times_nbody = np.loadtxt(path_times)
+        dt_nbody = times_nbody[1] - times_nbody[0]
+        N_snaps = len(times_nbody)
+        t_nbody = times_nbody[-1] - times_nbody[0]
 
-    dt_nbody = times_nbody[1] - times_nbody[0]
-    N_snaps = len(times_nbody)
-    t_nbody = times_nbody[-1] - times_nbody[0]
-
-
-    if (t_nbody < time):
-        print('Integration time requested {:.2f} larger than the possible time {:.2f}'.format(time, t_nbody))
-        exit(0)
+        if (t_nbody < time):
+             print('Integration time requested {:.2f} larger than the'\
+                   'possible time {:.2f}'.format(time, t_nbody))
+             exit(0)
 
     S_nlm, T_nlm = read_coefficients(path_coeff, N_snaps, nmax, lmax)
+    print(np.shape(S_nlm))
 
-    print('Interpolating coefficients')
-
-    S_interp, T_interp = interpolate_coeff(S_nlm, T_nlm, dt_nbody, interp_dt, t_nbody, nmax, lmax)
-
+    if (static==0):
+        print('Interpolating coefficients')
+        S_interp, T_interp = interpolate_coeff(S_nlm, T_nlm, dt_nbody,\
+                                               interp_dt, t_nbody,\
+                                                nmax, lmax)
     ## Integrating orbit in time-evolving potential.
 
-    print('Integrating orbit')
-    t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp, T_interp, G_c.value*g_fact, M, r_s, interp_dt, disk)
+    #print('Integrating orbit')
 
 
     if (LMC==1):
-        S_nlm_lmc, T_nlm_lmc = read_coefficients(path_coeff_lmc, N_snaps, nmax_lmc, lmax_lmc)
-        S_interp_lmc, T_interp_lmc = interpolate_coeff(S_nlm_lmc, T_nlm_lmc, dt_nbody, interp_dt, t_nbody, nmax_lmc, lmax_lmc)
-        t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp[0], T_interp[0], G_c.value*g_fact, M, r_s, interp_dt, disk, LMC=LMC, Slmc=S_interp_lmc[0], Tlmc=T_interp_lmc[0], x_lmc=-1, y_lmc=-44, z_lmc=-28, R_s_lmc = r_s_lmc)
+        S_nlm_lmc, T_nlm_lmc = read_coefficients(path_coeff_lmc,\
+                                                 N_snaps, nmax_lmc,\
+                                                 lmax_lmc)
 
+        if (static==1):
+            t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
+            = leapfrog_bfe.integrate_biff(x_init, y_init, z_init,\
+                                          vx_init, vy_init, vz_init,\
+                                          time, S_nlm[0], T_nlm[0], \
+                                          G_c.value*g_fact, M, r_s,\
+                                          interp_dt, disk, LMC=LMC,\
+                                          Slmc=S_nlm_lmc[0],\
+                                          Tlmc=T_nlm_lmc[0], x_lmc=-1,\
+                                          y_lmc=-44, z_lmc=-28,\
+                                          R_s_lmc = r_s_lmc)
+
+        elif (static==0):
+            S_interp_lmc, T_interp_lmc = interpolate_coeff(S_nlm_lmc,\
+                                                           T_nlm_lmc,\
+                                                           dt_nbody,\
+                                                           interp_dt,\
+                                                           t_nbody,\
+                                                           nmax_lmc,\
+                                                           lmax_lmc)
+
+
+            t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
+            = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
+                                            vx_init, vy_init, vz_init,\
+                                            time, S_interp, T_interp,\
+                                            G_c.value*g_fact, M, r_s,\
+                                            interp_dt, disk, LMC=LMC,\
+                                            Slmc=S_interp_lmc,\
+                                            Tlmc=T_interp_lmc,\
+                                            x_lmc=-1, y_lmc=-44,\
+                                            z_lmc=-28, R_s_lmc\
+                                            = r_s_lmc)
+
+    elif (LMC==0):
+        if (static==0):
+            print('Integrating orbit')
+            t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
+            = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
+                                            vx_init, vy_init, vz_init,\
+                                            time, S_interp, T_interp,\
+                                            G_c.value*g_fact, M, r_s,\
+                                            interp_dt, disk)
+
+        elif (static==1):
+            print('Integrating orbit')
+            t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
+            = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
+                                            vx_init, vy_init, vz_init,\
+                                            time, S_nlm, T_nlm,\
+                                            G_c.value*g_fact, M, r_s,\
+                                            interp_dt, disk)
 
     print('Writing data')
-    print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, orbit_name)
+
+    print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb,\
+                orbit_name)
 
 
 
