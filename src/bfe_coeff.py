@@ -170,8 +170,9 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
     S_mw = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
     T_mw = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
 
-    S_lmc = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
-    T_lmc = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
+    Lmax2 = 10
+    S_lmc = np.zeros((t, Nmax+1, Lmax2+1, Lmax2+1))
+    T_lmc = np.zeros((t, Nmax+1, Lmax2+1, Lmax2+1))
 
     for i in range(N_initial, N_final, 1):
         pos = readsnap(path+snap_name+'_{:03d}'.format(i), 'pos', 'dm')
@@ -202,14 +203,14 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
         if (LMC==1):
             pos_mw_cm = re_center_halo(pos_MW, rcm)
             pos_lmc_cm = re_center_halo(pos_LMC, rlmc)
-            S_mw[i], T_mw[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            S_mw[i-N_initial], T_mw[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
             ############################# change nmax and lmax lMC
-            S_lmc[i], T_lmc[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, 15, 10, r_s)
+            S_lmc[i-N_initial], T_lmc[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, 15, 10, r_s)
             return S_mw, T_mw, S_lmc, T_lmc
 
         elif (LMC==0):
             pos_cm = re_center_halo(pos, rcm)
-            S_mw[i], T_mw[i] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            S_mw[i-N_initial], T_mw[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
             # Computing Coefficients.
             return S_mw, T_mw, S_lmc, T_lmc
 

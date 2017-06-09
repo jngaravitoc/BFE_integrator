@@ -3,6 +3,16 @@ from astropy import units, constants
 import biff
 from soda.profiles import a_hernquist, a_mn
 
+
+def extract(dct, namespace=None):
+    # function that extracts variables from kwargs
+    # from:
+    # http://stackoverflow.com/questions/4357851/creating-or-assigning-variables-from-a-dictionary-in-python
+
+    if not namespace: namespace = globals()
+    namespace.update(dct)
+
+
 def disk_bulge_a(x, y, z):
     a_bulge = a_hernquist(0.7, x, y, z, 1.4E10)
     a_disk = a_mn(0.638, 1.7, x, y, z, 5.78E10)
@@ -118,7 +128,7 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s, disk=0):
 
     return t, x, y, z, vx, vy, vz
 
-def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt, disk=0):
+def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt, disk=0, **kwargs):
     """
     Orbit integration function for the BFE methods.
     the time evolution uses a leapfrog algorithm.
@@ -140,6 +150,16 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     R_s : Dark Matter halo scale lenght
     dt : time step between integration points.
     disk : if a disk is present disk=1, default disk=0
+
+    kwargs:
+    -------
+    LMC : 1, 0
+    Slmc
+    Tlmc
+    x_lmc
+    y_lmc
+    z_lmc
+    R_s_lmc
 
     Returns:
     --------
@@ -187,6 +207,8 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     r = np.zeros((1,3))
     r[0] = np.array([x[0], y[0], z[0]])
 
+    extract(kwargs)
+
     if (disk==0):
         ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value
         ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value
@@ -196,6 +218,18 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
         ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[0]
         ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[1]
         az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[2]
+
+
+    if (LMC==1):
+        r_lmc = np.zeros((1,3))
+        r_lmc[0] = np.array([x[0]-x_lmc[0], y[0]-y_lmc[0], z[0]-z_lmc[0]])
+        ax_lmc[0] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]* convtokpc_gyr2.value
+        ay_lmc[0] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]* convtokpc_gyr2.value
+        az_lmc[0] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]* convtokpc_gyr2.value
+        ax[0] += ax_lmc[0]
+        ay[0] += ay_lmc[0]
+        az[0] += az_lmc[0]
+
     # half step
     # Here I assume the host galaxy starts at position (0, 0, 0) and then its
     # initial v[1] is (0, 0, 0)
@@ -220,6 +254,15 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
         ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[1]
         az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[2]
 
+    if (LMC==1):
+        r_lmc[0] = np.array([x[1]-x_lmc[1], y[1]-y_lmc[1], z[1]-z_lmc[1]])
+        ax_lmc[1] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]* convtokpc_gyr2.value
+        ay_lmc[1] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]* convtokpc_gyr2.value
+        az_lmc[1] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]* convtokpc_gyr2.value
+        ax[1] += ax_lmc[1]
+        ay[1] += ay_lmc[1]
+        az[1] += az_lmc[1]
+
     for i in range(2, len(x)):
         t[i] = t[i-1] - h
         x[i] = x[i-2] - 2 * h * vx[i-1]
@@ -242,6 +285,15 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
             ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[0]
             ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[1]
             az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[2]
+
+        if (LMC==1):
+            r_lmc[0] = np.array([x[i]-x_lmc[i], y[i]-y_lmc[i], z[i]-z_lmc[i]])
+            ax_lmc[i] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]* convtokpc_gyr2.value
+            ay_lmc[i] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]* convtokpc_gyr2.value
+            az_lmc[i] = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]* convtokpc_gyr2.value
+            ax[i] += ax_lmc[i]
+            ay[i] += ay_lmc[i]
+            az[i] += az_lmc[i]
 
     return t, x, y, z, vx, vy, vz
 

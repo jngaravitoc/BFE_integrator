@@ -101,10 +101,15 @@ if __name__ == "__main__":
         print('r_s : scale lenght of the halo in kpc')
         print('nmax')
         print('lmax')
-        print('path_coeff: path to coefficients')
+        print('path_coeff: path to the BFE coefficients')
         print('path_times: path to times')
         print('orbit name : name of the orbit output file')
         print('disk : 1 if disk, 0 if not')
+        print('LMC : 1 if LMC, 0 if not')
+        print('path_coeff_lmc : path to the LMC BFE coefficients')
+        print('nmax_lmc : nmax for the lmc')
+        print('lmax_lmc : lmax for the lmc')
+        print('r_s_lmc : r_s for the lmc')
         print('')
         print('////////////////////////////////////////////////////////////////')
         exit(0)
@@ -128,6 +133,12 @@ if __name__ == "__main__":
     path_times = sys.argv[13]
     orbit_name = sys.argv[14]
     disk = int(sys.argv[15])
+
+    LMC = int(sys.argv[16])
+    path_coeff_lmc = sys.argv[17]
+    nmax_lmc = int(sys.argv[18])
+    lmax_lmc = int(sys.argv[19])
+    r_s_lmc = float(sys.argv[20])
 
     M = 1
     G_c = constants.G
@@ -157,6 +168,13 @@ if __name__ == "__main__":
 
     print('Integrating orbit')
     t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp, T_interp, G_c.value*g_fact, M, r_s, interp_dt, disk)
+
+
+    if (LMC==1):
+        S_nlm_lmc, T_nlm_lmc = read_coefficients(path_coeff_lmc, N_snaps, nmax_lmc, lmax_lmc)
+        S_interp_lmc, T_interp_lmc = interpolate_coeff(S_nlm_lmc, T_nlm_lmc, dt_nbody, interp_dt, t_nbody, nmax_lmc, lmax_lmc)
+        t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb = leapfrog_bfe.integrate_biff(x_init, y_init, z_init, vx_init, vy_init, vz_init, time, S_interp[0], T_interp[0], G_c.value*g_fact, M, r_s, interp_dt, disk, LMC=LMC, Slmc=S_interp_lmc[0], Tlmc=T_interp_lmc[0], x_lmc=-1, y_lmc=-44, z_lmc=-28, R_s_lmc = r_s_lmc)
+
 
     print('Writing data')
     print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb, orbit_name)
