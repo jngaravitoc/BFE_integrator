@@ -301,10 +301,11 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     return t, x, y, z, vx, vy, vz
 
 
+
+
 def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt, disk=0):
     """
-
-    Function that computes 
+    Function that computes
     """
     h = -dt
     n_points = int(time * 1/abs(h))

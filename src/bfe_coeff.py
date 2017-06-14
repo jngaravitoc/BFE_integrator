@@ -205,17 +205,18 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
             pos_lmc_cm = re_center_halo(pos_LMC, rlmc)
             S_mw[i-N_initial], T_mw[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
             ############################# change nmax and lmax lMC
-            S_lmc[i-N_initial], T_lmc[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, 12, 5, r_s)
-            return S_mw, T_mw, S_lmc, T_lmc
+            S_lmc[i-N_initial], T_lmc[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, Nmax, Lmax2, r_s)
 
         elif (LMC==0):
             pos_cm = re_center_halo(pos, rcm)
             S_mw[i-N_initial], T_mw[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
             # Computing Coefficients.
-            return S_mw, T_mw, S_lmc, T_lmc
 
+    if (LMC==0):
+        return S_mw, T_mw
 
-
+    if (LMC==1):
+        return S_mw, T_mw, S_lmc, T_lmc
 
 
 

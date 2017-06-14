@@ -41,18 +41,20 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
     """
 
     # time arrays
-    time_array = np.linspace(0, time, time/dt_nbody)
-    time_array_new = np.linspace(0, time, time/dt_int)
+    print(time, dt_nbody)
+    time_array = np.linspace(0, time, time/dt_nbody+2)
+    time_array_new = np.linspace(0, time, time/dt_int+2)
 
     ## Coefficient Matrices size: [time, nmax+1, lmax+1, lmax+1]
-    S_new = np.zeros((int(time/dt_int), nmax+1, lmax+1, lmax+1))
-    T_new = np.zeros((int(time/dt_int), nmax+1, lmax+1, lmax+1))
+    S_new = np.zeros((int(time/dt_int)+2, nmax+1, lmax+1, lmax+1))
+    T_new = np.zeros((int(time/dt_int)+2, nmax+1, lmax+1, lmax+1))
     # Interpolating the coefficients.
     for i in range(nmax+1):
         for j in range(lmax+1):
             for k in range(lmax+1):
                 if k<=j:
                     # put the contrain k<j ?·
+                    print(len(time_array), len(S[:,i,j,k]))
                     f = interpolate.interp1d(time_array, S[:,i,j,k])
                     S_new[:,i,j,k] = f(time_array_new)
 
@@ -167,14 +169,15 @@ if __name__ == "__main__":
                    'possible time {:.2f}'.format(time, t_nbody))
              exit(0)
 
+    print(N_snaps)
     S_nlm, T_nlm = read_coefficients(path_coeff, N_snaps, nmax, lmax)
-    print(np.shape(S_nlm))
+    print(np.shape(S_nlm), np.shape(T_nlm))
 
     if (static==0):
         print('Interpolating coefficients')
         S_interp, T_interp = interpolate_coeff(S_nlm, T_nlm, dt_nbody,\
                                                interp_dt, t_nbody,\
-                                                nmax, lmax)
+                                               nmax, lmax)
     ## Integrating orbit in time-evolving potential.
 
     #print('Integrating orbit')
