@@ -57,9 +57,11 @@ import sys
 import octopus
 import leapfrog_bfe
 
+## Code main functions:
+
 def re_center_halo(pos, r_cm):
     """
-    Re-center a halo.
+    Re-center a halo positions or velocities.
     """
     for i in range(3):
         pos[:,i] = pos[:,i] - r_cm[i]
@@ -71,7 +73,8 @@ def snap_times_nbody(path, snap_name, N_initial):
 
     """
     for i in range(N_initial, N_initial+1):
-        dt = readheader(path+snap_name+'_{:03d}'.format(i+1), 'time') - readheader(path+snap_name+'_{:03d}'.format(i), 'time')
+        dt = readheader(path+snap_name+'_{:03d}'.format(i+1), 'time')\
+             - readheader(path+snap_name+'_{:03d}'.format(i), 'time')
         return dt
 
 def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
@@ -91,10 +94,13 @@ def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
     f = open('../coefficients/ST_'+file_name, 'w')
     f.write('# number of time steps : {:.3f} \n'.format(t_max))
     f.write('# nmax = {:0>2d}, lmax = {:0>2d} \n'.format(nmax, lmax))
-    f.write('# orginal matrix shape [{:.1f},{:0>1d}, {:0>1d}, {:0>1d} ] \n'.format(t_max, nmax, lmax, lmax))
+    f.write('# orginal matrix shape [{:.1f},{:0>1d}, {:0>1d},'\
+            ' {:0>1d} ] \n'.format(t_max, nmax, lmax, lmax))
+
     f.write('# Snlm, Tnlm \n')
     f.write('# r_s = {:.2f} \n'.format(r_s))
     f.write('# ICs from {} \n'.format(path))
+
     for i in range(len(S_flat)):
         f.write("{:.3f} {:.3f} \n".format(S_flat[i], T_flat[i]))
 
@@ -112,8 +118,10 @@ def disk_bulge(path,  snap_name, N_initial):
     See is there are disk or bulge particles!
 
     """
-    n_diskpart = readheader(path + snap_name + "_{:03d}".format(N_initial), 'diskcount')
-    n_bulgepart = readheader(path + snap_name + "_{:03d}".format(N_initial), 'bulgecount')
+    n_diskpart = readheader(path + snap_name + "_{:03d}"\
+                            .format(N_initial), 'diskcount')
+    n_bulgepart = readheader(path + snap_name + "_{:03d}"\
+                             .format(N_initial), 'bulgecount')
 
     if (n_diskpart == 0):
         disk = 0
@@ -128,7 +136,8 @@ def disk_bulge(path,  snap_name, N_initial):
     return disk, bulge
 
 def compute_coeffs_from_snaps(path, snap_name, N_initial, \
-                              N_final, Nmax, Lmax, r_s, r_s_lmc =3, disk=0, LMC=0, Nhalo=0):
+                              N_final, Nmax, Lmax, r_s, r_s_lmc =3,\
+                              disk=0, LMC=0, Nhalo=0):
     """
     Compute the coefficients from a series of snapshots of N-body
     simulations.
@@ -180,14 +189,21 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
         pids = readsnap(path+snap_name+'_{:03d}'.format(i), 'pid', 'dm')
 
         if (LMC==1):
-            pos_MW, mass_MW, pos_LMC, mass_LMC = octopus.orbit_cm.MW_LMC_particles(pos, mass, pids, Nhalo)
+            pos_MW, mass_MW, pos_LMC, mass_LMC \
+            = octopus.orbit_cm.MW_LMC_particles(pos, mass, pids, Nhalo)
 
         ## Computing the COM.
 
         if (disk==1):
-            pos_disk = readsnap(path+snap_name+'_{:03d}'.format(i), 'pos', 'disk')
-            pot_disk = readsnap(path+snap_name+'_{:03d}'.format(i), 'pot', 'disk')
-            rcm, vcm = octopus.CM_disk_potential(pos_disk, pos_disk, pot_disk)
+            pos_disk = readsnap(path+snap_name+'_{:03d}'.format(i),\
+                                'pos', 'disk')
+
+            pot_disk = readsnap(path+snap_name+'_{:03d}'.format(i),\
+                                'pot', 'disk')
+
+            rcm, vcm = octopus.CM_disk_potential(pos_disk, pos_disk,\
+                                                 pot_disk)
+
 
             if (LMC==1):
                 rlmc, vlmc = octopus.CM(pos_LMC, pos_LMC) # not using velocities!
@@ -199,23 +215,36 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
             rcm, vcm = octopus.CM(pos_MW, pos_MW) # not using velocities!
             rlmc, vlmc = octopus.CM(pos_LMC, pos_LMC) # not using velocities!
 
-        ## Re-centering halo.
+
+        ## if the LMC is in the simulation
+
         if (LMC==1):
+            ## Centering halo
             pos_mw_cm = re_center_halo(pos_MW, rcm)
             pos_lmc_cm = re_center_halo(pos_LMC, rlmc)
-            S_mw[i-N_initial], T_mw[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
+
+            ## Compute Snlm and Tnlm for the MW halo particles.
+            S_mw[i-N_initial], T_mw[i-N_initial]\
+            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
+
             ############################# change nmax and lmax lMC
-            S_lmc[i-N_initial], T_lmc[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, Nmax, Lmax2, r_s)
+
+            ## Compute Snlm and Tnlm for the LMC halo particles.
+            S_lmc[i-N_initial], T_lmc[i-N_initial]\
+             = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, Nmax, Lmax2, r_s)
+
+        ## Without the LMC:
 
         elif (LMC==0):
             pos_cm = re_center_halo(pos, rcm)
-            S_mw[i-N_initial], T_mw[i-N_initial] = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            S_mw[i-N_initial], T_mw[i-N_initial] \
+            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
             # Computing Coefficients.
 
     if (LMC==0):
         return S_mw, T_mw
 
-    if (LMC==1):
+    elif (LMC==1):
         return S_mw, T_mw, S_lmc, T_lmc
 
 
@@ -241,6 +270,7 @@ if __name__ == "__main__":
         print('////////////////////////////////////////////////////////////////')
         exit(0)
 
+    ## Reading variables from argv!
 
     path = sys.argv[1]
     snap_name = sys.argv[2]
@@ -257,27 +287,66 @@ if __name__ == "__main__":
     LMC = int(sys.argv[9])
     Nhalo = int(sys.argv[10])
 
+    ## Total number of snapshots:
+
     N_snaps = final_snap - init_snap
+
+    ## Time between snapshots:
+
     dt_nbody = snap_times_nbody(path, snap_name, init_snap)
 
-    times = np.linspace(init_snap*dt_nbody, final_snap*dt_nbody, N_snaps)
+    ## Total time between the first and the initial snapshot.
+
+    times = np.linspace(init_snap*dt_nbody, final_snap*dt_nbody,\
+                        N_snaps)
+
+    ## Look for the presence of the disk or the bulge.
+    ## this is done for the computation of the COM.
 
     disk, bulge = disk_bulge(path, snap_name, init_snap)
 
     print('disk, bulge', disk, bulge)
 
-    # Computing coefficients.
+
+
+    ## Computing coefficients.
+
     print('Computing BFE coefficients')
+
     if (LMC==0):
         r_s_lmc=0
-        S_mw, T_mw = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s_mw, r_s_lmc, disk, LMC, Nhalo)
+        S_mw, T_mw = compute_coeffs_from_snaps(path, snap_name,\
+                                               init_snap, final_snap,\
+                                               nmax, lmax, r_s_mw,\
+                                               r_s_lmc, disk, LMC,\
+                                               Nhalo)
+
         print('Writting coefficients')
-        write_coefficients(S_mw, T_mw, times, 'MW'+out_name, N_snaps ,nmax, lmax, r_s, path)
+
+        write_coefficients(S_mw, T_mw, times, 'MW'+out_name, N_snaps,\
+                           nmax, lmax, r_s, path)
 
     if (LMC==1):
+        ##  Computing coefficients.
+        ## *****
         r_s_lmc=3
-        S_mw, T_mw, S_lmc, T_lmc = compute_coeffs_from_snaps(path, snap_name, init_snap, final_snap, nmax, lmax, r_s_mw, r_s_lmc, disk, LMC, Nhalo)
-        print('Writting coefficients')
-        write_coefficients(S_mw, T_mw, times, 'MW'+ out_name, N_snaps ,nmax, lmax, r_s_mw, path)
-        write_coefficients(S_lmc, T_lmc, times, 'LMC'+ out_name, N_snaps ,nmax, lmax, r_s_lmc, path)
+        S_mw, T_mw, S_lmc, T_lmc = compute_coeffs_from_snaps(path,\
+                                                             snap_name,\
+                                                             init_snap,\
+                                                             final_snap,\
+                                                             nmax,lmax,\
+                                                             r_s_mw,\
+                                                             r_s_lmc,\
+                                                             disk,\
+                                                             LMC,\
+                                                             Nhalo)
+
+        ## writing the coefficients!
+
+        print('Writing coefficients')
+        write_coefficients(S_mw, T_mw, times, 'MW'+ out_name, N_snaps,\
+                           nmax, lmax, r_s_mw, path)
+
+        write_coefficients(S_lmc, T_lmc, times, 'LMC'+ out_name,\
+                           N_snaps, nmax, lmax, r_s_lmc, path)
 
