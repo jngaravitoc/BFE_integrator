@@ -343,7 +343,7 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G,\
     r = np.zeros((1,3))
     r[0] = np.array([x[0], y[0], z[0]])
 
-    extraxt(kwargs)
+    extract(kwargs)
 
     if (disk==0):
         ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0]\
