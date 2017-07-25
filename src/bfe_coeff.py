@@ -1,5 +1,5 @@
 """
-Code to compute the BFE coefficients from 
+Code to compute the BFE coefficients from
 a N-body simulated halo.
 
 Dependencies:
@@ -7,7 +7,7 @@ Dependencies:
 1. Biff : Compute the BFE coefficients, and accelerations.
 2. Scipy : interpolation routines.
 3. pygadgetreader : read Gadget snapshots.
-4. Astropy : units and constans.
+4. Astropy : units and constants.
 5. Octopus : to compute COM of the halo.
 
 Code structure:
@@ -17,8 +17,8 @@ Code structure:
   is re-centered to the halo COM.) The centering is done here by using
   octopus.
 - Interpolate the coefficients.
-- Integrate orbits with the interpolated coeffciients.
-- The resulting orbit is in galactocentric orbtis!
+- Integrate orbits with the interpolated coefficients.
+- The resulting orbit is in galactocentric coordinates.
 
 Input parameters:
 -----------------
@@ -36,8 +36,8 @@ Important:
 
 If comparison wants to be done with Gadget orbits
 please use the gravitational constant G of Gadget
-G=43007.1kpc3/(Gyr2Msun)/1E10. This is what the code is using right
-now!
+G=43007.1kpc3/(Gyr2Msun)/1E10. 
+This is what the code uses as default
 
 
 to-do:
@@ -63,6 +63,7 @@ def re_center_halo(pos, r_cm):
     """
     Re-center a halo positions or velocities.
     """
+
     for i in range(3):
         pos[:,i] = pos[:,i] - r_cm[i]
     return pos
@@ -88,8 +89,11 @@ def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
     """
 
 
+    # from 3d to 1d coefficients.
+
     S_flat = S.flatten()
     T_flat = T.flatten()
+
 
     f = open('../coefficients/ST_'+file_name, 'w')
     f.write('# number of time steps : {:.3f} \n'.format(t_max))
@@ -106,6 +110,7 @@ def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
 
     f.close()
 
+    # Write a file with the times between coefficients.
     f = open('../coefficients/times_' + file_name, 'w')
 
     f.write('# Times in Gyrs \n')
@@ -115,9 +120,29 @@ def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
 
 def disk_bulge(path,  snap_name, N_initial):
     """
-    See is there are disk or bulge particles!
+    Check if the there is a disk or a bulge in the simulation
+
+    Parameters:
+    -----------
+    path : str
+        path to simulation.
+
+    snap_name : str
+        snapshot base name.
+
+    N_initial : int
+        Number of the snapshot.
+
+    Returns:
+    --------
+
+    bulge : int
+        If no bulge particles it returns 0, otherwise it returns 1.
+    disk : int
+        If no disk particles it returns 0, otherwise it returns 1.
 
     """
+
     n_diskpart = readheader(path + snap_name + "_{:03d}"\
                             .format(N_initial), 'diskcount')
     n_bulgepart = readheader(path + snap_name + "_{:03d}"\
@@ -136,7 +161,8 @@ def disk_bulge(path,  snap_name, N_initial):
     return disk, bulge
 
 def compute_coeffs_from_snaps(path, snap_name, N_initial, \
-                              N_final, Nmax, Lmax, r_s, r_s_lmc =3,\
+                              N_final, Nmax, Lmax, r_s, Nmax_lmc=0,\
+                              Lmax_lmc=0, r_s_lmc=3,\
                               disk=0, LMC=0, Nhalo=0):
     """
     Compute the coefficients from a series of snapshots of N-body
@@ -146,18 +172,18 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
     Input:
     ------
 
-    path : string
+    path : str
         path to snapshots
-    snap_name : string
+    snap_name : str
         snapshots base name
     N_intitial : int
         initial number of the snapshot.
     N_final : int
         final number of the snaphot in the simulation.
     Nmax : int
-        Max number of expansion terms in the radial terms of the BFE.
+        Maximum number of terms in the radial terms of the BFE.
     Lmax:
-        Max number of expansion terms in the angular terms of the BFE.
+        Maximum number of terms in the angular terms of the BFE.
     r_s: float
         Halo scale length in kpc.
     disk : int
@@ -167,28 +193,35 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
     Nhalo : int
         Number of MW DM particles.
 
-    Return:
+    Returns:
     -------
 
     S : matrix of shape [t, nmax+1, lmax+1, lmax+1]
     T : matrix of shape [t, nmax+1, lmax+1, lmax+1]
 
     """
+
+    # total time.
     t = N_final - N_initial
 
+    # Snlm and Tnlm matrices initialization for the MW.
     S_mw = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
     T_mw = np.zeros((t, Nmax+1, Lmax+1, Lmax+1))
 
-    Lmax2 = 5
-    S_lmc = np.zeros((t, Nmax+1, Lmax2+1, Lmax2+1))
-    T_lmc = np.zeros((t, Nmax+1, Lmax2+1, Lmax2+1))
+    # Lmax
+    S_lmc = np.zeros((t, Nmax_lmc+1, Lmax_lmc+1, Lmax_lmc+1))
+    T_lmc = np.zeros((t, Nmax_lmc+1, Lmax_lmc+1, Lmax_lmc+1))
 
+    # computing the coefficients for all the snapshots.
     for i in range(N_initial, N_final, 1):
         pos = readsnap(path+snap_name+'_{:03d}'.format(i), 'pos', 'dm')
         mass = readsnap(path+snap_name+'_{:03d}'.format(i), 'mass', 'dm')
         pids = readsnap(path+snap_name+'_{:03d}'.format(i), 'pid', 'dm')
 
+        # If the LMC is present:
         if (LMC==1):
+            # selecting MW and LMC particles.
+
             pos_MW, mass_MW, pos_LMC, mass_LMC \
             = octopus.orbit_cm.MW_LMC_particles(pos, mass, pids, Nhalo)
 
@@ -203,23 +236,25 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
 
             rcm, vcm = octopus.CM_disk_potential(pos_disk, pos_disk,\
                                                  pot_disk)
-
+            # Computing the LMC COM.
 
             if (LMC==1):
                 rlmc, vlmc = octopus.CM(pos_LMC, pos_LMC) # not using velocities!
 
+        # If halo with no disk:
         elif ((disk==0) & (LMC==0)):
             rcm, vcm = octopus.CM(pos, pos) # not using velocities!
 
+        # if halo with LMC halo:
         elif ((disk==0) & (LMC==1)):
             rcm, vcm = octopus.CM(pos_MW, pos_MW) # not using velocities!
             rlmc, vlmc = octopus.CM(pos_LMC, pos_LMC) # not using velocities!
 
 
-        ## if the LMC is in the simulation
+        ## Centering the halos & computing the Snlm Tnlm coefficients.
 
         if (LMC==1):
-            ## Centering halo
+            ## Centering halos
             pos_mw_cm = re_center_halo(pos_MW, rcm)
             pos_lmc_cm = re_center_halo(pos_LMC, rlmc)
 
@@ -231,7 +266,9 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
 
             ## Compute Snlm and Tnlm for the LMC halo particles.
             S_lmc[i-N_initial], T_lmc[i-N_initial]\
-             = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)), mass_LMC.astype(np.double)*1E10, Nmax, Lmax2, r_s)
+            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_lmc_cm.astype(np.double)),\
+                                           mass_LMC.astype(np.double)*1E10,\
+                                           Nmax_lmc, Lmax_lmc, r_s_lmc)
 
         ## Without the LMC:
 
@@ -280,12 +317,15 @@ if __name__ == "__main__":
 
     nmax = int(sys.argv[5])
     lmax = int(sys.argv[6])
-
     r_s_mw = float(sys.argv[7])
 
-    out_name = sys.argv[8]
-    LMC = int(sys.argv[9])
-    Nhalo = int(sys.argv[10])
+    nmax_lmc = int(sys.argv[8])
+    lmax_lmc = int(sys.argv[9])
+    r_s_lmc = float(sys.argv[10])
+
+    out_name = sys.argv[11]
+    LMC = int(sys.argv[12])
+    Nhalo = int(sys.argv[13])
 
     ## Total number of snapshots:
 
@@ -314,12 +354,11 @@ if __name__ == "__main__":
     print('Computing BFE coefficients')
 
     if (LMC==0):
-        r_s_lmc=0
         S_mw, T_mw = compute_coeffs_from_snaps(path, snap_name,\
                                                init_snap, final_snap,\
                                                nmax, lmax, r_s_mw,\
-                                               r_s_lmc, disk, LMC,\
-                                               Nhalo)
+                                               disk=disk, LMC=LMC,\
+                                               Nhalo=Nhalo)
 
         print('Writting coefficients')
 
@@ -329,13 +368,14 @@ if __name__ == "__main__":
     if (LMC==1):
         ##  Computing coefficients.
         ## *****
-        r_s_lmc=3
         S_mw, T_mw, S_lmc, T_lmc = compute_coeffs_from_snaps(path,\
                                                              snap_name,\
                                                              init_snap,\
                                                              final_snap,\
                                                              nmax,lmax,\
                                                              r_s_mw,\
+                                                             nmax_lmc,\
+                                                             lmax_lmc,\
                                                              r_s_lmc,\
                                                              disk,\
                                                              LMC,\
