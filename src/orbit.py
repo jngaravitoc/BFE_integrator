@@ -53,7 +53,7 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
         for j in range(lmax+1):
             for k in range(lmax+1):
                 if k<=j:
-                    # put the contrain k<j ?·
+                    # put the constrain k<j ?·
                     print(len(time_array), len(S[:,i,j,k]))
                     f = interpolate.interp1d(time_array, S[:,i,j,k])
                     S_new[:,i,j,k] = f(time_array_new)
@@ -62,6 +62,9 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
 
 
 def read_coefficients(path, tmax, nmax, lmax):
+    """
+    Function that reads the coefficients.
+    """
 
     ST = np.loadtxt(path)
 
@@ -125,6 +128,9 @@ if __name__ == "__main__":
         exit(0)
 
 
+    # defining variables:
+
+    ## particles orbit initial conditions.
     x_init = float(sys.argv[1])
     y_init = float(sys.argv[2])
     z_init = float(sys.argv[3])
@@ -132,17 +138,27 @@ if __name__ == "__main__":
     vy_init = float(sys.argv[5])
     vz_init = float(sys.argv[6])
 
+
+    # Times:
     time = float(sys.argv[7])
     interp_dt = float(sys.argv[8])
+
+    # 
     static = int(sys.argv[9])
     r_s = float(sys.argv[10])
+
+    # Size of BFE expansion.
     nmax  = int(sys.argv[11])
     lmax = int(sys.argv[12])
 
+    # Paths to coefficients.
     path_coeff = sys.argv[13]
     path_times = sys.argv[14]
+
+
     orbit_name = sys.argv[15]
     disk = int(sys.argv[16])
+
 
     LMC = int(sys.argv[17])
     path_coeff_lmc = sys.argv[18]

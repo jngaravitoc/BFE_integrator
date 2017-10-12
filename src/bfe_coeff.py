@@ -288,7 +288,7 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
 
 if __name__ == "__main__":
 
-    if(len(sys.argv)!=11):
+    if(len(sys.argv)!=14):
         print('///////////////////////////////////////////////////////////////')
         print('')
         print('Usage:')

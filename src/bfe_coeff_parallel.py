@@ -30,6 +30,27 @@ Output:
 -------
 Orbit.
 
+Usage:
+------
+
+python bfe_coeff_parallel.py
+
+
+path to n-body:
+snap_name
+init_snap
+final_snap
+nmax
+lmax
+r_s_mw
+nmax_lmc
+lmax_lmc
+r_s_lmc
+out_name
+LMC
+N_halo
+ncores
+-mpi
 
 Important:
 ----------
@@ -65,7 +86,7 @@ import schwimmbad
 
 def re_center_halo(pos, r_cm):
     """
-    Re-center a halo positions or velocities.
+    Re-center halo positions or velocities.
     """
 
     for i in range(3):
@@ -74,10 +95,11 @@ def re_center_halo(pos, r_cm):
 
 def snap_times_nbody(path, snap_name, N_initial):
     """
-    Computed the times between snapshots of the n-body simulation.
+    Compute the times between snapshots of the n-body simulation.
 
     """
     for i in range(N_initial, N_initial+1):
+        print('here\n')
         dt = readheader(path+snap_name+'_{:03d}'.format(i+1), 'time')\
              - readheader(path+snap_name+'_{:03d}'.format(i), 'time')
         return dt
@@ -105,7 +127,7 @@ def write_coefficients(S, T, file_name, nmax, lmax, r_s, n):
     f = open('ST_'+file_name+'{:d}'.format(n), 'w')
     #f.write('# number of time steps : {:.3f} \n'.format(t_max))
     f.write('# nmax = {:0>2d}, lmax = {:0>2d} \n'.format(nmax, lmax))
-    f.write('# orginal matrix shape [{:.1f},{:0>1d}, {:0>1d},'\
+    f.write('# original matrix shape [{:.1f},{:0>1d}, {:0>1d},'\
             ' {:0>1d} ] \n'.format(n, nmax, lmax, lmax))
 
     f.write('# Snlm, Tnlm \n')
@@ -189,6 +211,7 @@ class Worker(object):
 
 
     def compute_coeffs_from_snaps(self, n):
+        print('n=', n)
         pos = readsnap(self.path+self.snap_name+'_{:03d}'.format(n), 'pos', 'dm')
         mass = readsnap(self.path+self.snap_name+'_{:03d}'.format(n), 'mass', 'dm')
         pids = readsnap(self.path+self.snap_name+'_{:03d}'.format(n), 'pid', 'dm')
@@ -275,6 +298,7 @@ class Worker(object):
 
     def __call__(self, task):
         print('hello')
+        print(task)
         self.compute_coeffs_from_snaps(task)
 
 def main(pool, path, snap_name, init_snap, final_snap, nmax, lmax,
@@ -291,7 +315,6 @@ def main(pool, path, snap_name, init_snap, final_snap, nmax, lmax,
     N_snaps = final_snap - init_snap
 
     ## Time between snapshots:
-
     dt_nbody = snap_times_nbody(path, snap_name, init_snap)
 
     ## Total time between the first and the initial snapshot.
@@ -311,7 +334,8 @@ def main(pool, path, snap_name, init_snap, final_snap, nmax, lmax,
                     lmax, r_s_mw, nmax_lmc, lmax_lmc, r_s_lmc, 
                     out_name, LMC, Nhalo)
 
-    tasks = list(range(N_snaps))
+    tasks = list(range(N_snaps+init_snap))
+    print('tasks', tasks)
     for r in pool.map(worker, tasks, callback=Worker.callback):
         pass
 
