@@ -363,7 +363,7 @@ if __name__ == "__main__":
         print('Writting coefficients')
 
         write_coefficients(S_mw, T_mw, times, 'MW'+out_name, N_snaps,\
-                           nmax, lmax, r_s, path)
+                           nmax, lmax, r_s_mw, path)
 
     if (LMC==1):
         ##  Computing coefficients.
