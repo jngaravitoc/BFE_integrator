@@ -72,7 +72,7 @@ def read_coefficients(path, tmax, nmax, lmax):
     T = ST[:,1]
 
     S_nlm = S.reshape(tmax, nmax+1, lmax+1, lmax+1)
-    T_nlm = S.reshape(tmax, nmax+1, lmax+1, lmax+1)
+    T_nlm = T.reshape(tmax, nmax+1, lmax+1, lmax+1)
 
     return np.ascontiguousarray(S_nlm), np.ascontiguousarray(T_nlm)
 
