@@ -64,6 +64,7 @@ def re_center_halo(pos, r_cm):
     Re-center a halo positions or velocities.
     """
 
+    print('COM coordinates', r_cm)
     for i in range(3):
         pos[:,i] = pos[:,i] - r_cm[i]
     return pos
@@ -95,7 +96,7 @@ def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
     T_flat = T.flatten()
 
 
-    f = open('../coefficients/ST_'+file_name, 'w')
+    f = open('./coefficients/ST_'+file_name, 'w')
     f.write('# number of time steps : {:.3f} \n'.format(t_max))
     f.write('# nmax = {:0>2d}, lmax = {:0>2d} \n'.format(nmax, lmax))
     f.write('# orginal matrix shape [{:.1f},{:0>1d}, {:0>1d},'\
@@ -111,7 +112,7 @@ def write_coefficients(S, T, times, file_name, t_max, nmax, lmax, r_s, path):
     f.close()
 
     # Write a file with the times between coefficients.
-    f = open('../coefficients/times_' + file_name, 'w')
+    f = open('./coefficients/times_' + file_name, 'w')
 
     f.write('# Times in Gyrs \n')
     for i in range(len(times)):
@@ -260,7 +261,7 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
 
             ## Compute Snlm and Tnlm for the MW halo particles.
             S_mw[i-N_initial], T_mw[i-N_initial]\
-            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_mw_cm.astype(np.double)), mass_MW.astype(np.double), Nmax, Lmax, r_s)
 
             ############################# change nmax and lmax lMC
 
@@ -273,9 +274,10 @@ def compute_coeffs_from_snaps(path, snap_name, N_initial, \
         ## Without the LMC:
 
         elif (LMC==0):
+            print('here!!! -> LMC0')
             pos_cm = re_center_halo(pos, rcm)
             S_mw[i-N_initial], T_mw[i-N_initial] \
-            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double)*1E10, Nmax, Lmax, r_s)
+            = biff.compute_coeffs_discrete(np.ascontiguousarray(pos_cm.astype(np.double)), mass.astype(np.double), Nmax, Lmax, r_s)
             # Computing Coefficients.
 
     if (LMC==0):
@@ -365,6 +367,7 @@ if __name__ == "__main__":
         write_coefficients(S_mw, T_mw, times, 'MW'+out_name, N_snaps,\
                            nmax, lmax, r_s_mw, path)
 
+    
     if (LMC==1):
         ##  Computing coefficients.
         ## *****
@@ -389,4 +392,4 @@ if __name__ == "__main__":
 
         write_coefficients(S_lmc, T_lmc, times, 'LMC'+ out_name,\
                            N_snaps, nmax, lmax, r_s_lmc, path)
-
+    
