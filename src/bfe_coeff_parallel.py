@@ -57,8 +57,9 @@ Important:
 
 If comparison wants to be done with Gadget orbits
 please use the gravitational constant G of Gadget
-G=43007.1kpc3/(Gyr2Msun)/1E10. 
+G=43007.1 km^2 * kpc/(s^2 Msun * 1E10). 
 This is what the code uses as default
+see: https://github.com/jngaravitoc/MW_anisotropy/blob/master/code/equilibrium/G_units_gadget.ipynb
 
 
 to-do:
@@ -80,6 +81,7 @@ import leapfrog_bfe
 #rom multiprocessing import Pool
 from os.path import join
 import schwimmbad
+
 
 
 ## Code main functions:
@@ -300,6 +302,7 @@ class Worker(object):
         print('hello')
         print(task)
         self.compute_coeffs_from_snaps(task)
+        self.callback(task)
 
 def main(pool, path, snap_name, init_snap, final_snap, nmax, lmax,
         r_s_mw, nmax_lmc, lmax_lmc, r_s_lmc, out_name, LMC, Nhalo):
