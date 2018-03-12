@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+
+
 path="../../MW_anisotropy/code/test_snaps/"
 snap_name="MWLMC5_40M_20new_b0_6"
 init_snap="142"
