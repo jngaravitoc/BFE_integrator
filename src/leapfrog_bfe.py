@@ -179,8 +179,8 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
 
     #from kpc/gyrs to km/s
 
-    kpc_s2 = 1 * units.kpc / units.s**2
-    convtokpc_gyr2 = kpc_s2.to(units.kpc/units.Gyr**2)
+    #kpc_s2 = 1 * units.kpc / units.s**2
+    #convtokpc_gyr2 = kpc_s2.to(units.kpc/units.Gyr**2)
 
     t = np.zeros(n_points)
     x = np.zeros(n_points)
@@ -208,27 +208,26 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     r[0] = np.array([x[0], y[0], z[0]])
 
     extract(kwargs)
-    print(np.shape(Slmc))
-    print(x_lmc)
-    print(R_s_lmc)
+    #print(np.shape(Slmc))
+    #print(x_lmc)
+    #print(R_s_lmc)
 
     if (disk==0):
-        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value
-        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value
-        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value
-
+        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]
+        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]
+        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]
     if (disk==1):
-        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[0]
-        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[1]
-        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[0], y[0], z[0])[2]
+        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0] + disk_bulge_a(x[0], y[0], z[0])[0]
+        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1] + disk_bulge_a(x[0], y[0], z[0])[1]
+        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2] + disk_bulge_a(x[0], y[0], z[0])[2]
 
 
     if (LMC==1):
         r_lmc = np.zeros((1,3))
         r_lmc[0] = np.array([x[0]-x_lmc, y[0]-y_lmc, z[0]-z_lmc])
-        ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]* convtokpc_gyr2.value
-        ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]* convtokpc_gyr2.value
-        az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]* convtokpc_gyr2.value
+        ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]
+        ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]
+        az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]
         ax[0] += ax_lmc
         ay[0] += ay_lmc
         az[0] += az_lmc
@@ -248,20 +247,20 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     r[0] = np.array([x[1], y[1], z[1]])
 
     if (disk==0):
-        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value
-        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value
-        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value
+        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]
+        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]
+        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]
 
     if (disk==1):
-        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[0]
-        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[1]
-        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]* convtokpc_gyr2.value + disk_bulge_a(x[1], y[1], z[1])[2]
+        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0] + disk_bulge_a(x[1], y[1], z[1])[0]
+        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1] + disk_bulge_a(x[1], y[1], z[1])[1]
+        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2] + disk_bulge_a(x[1], y[1], z[1])[2]
 
     if (LMC==1):
         r_lmc[0] = np.array([x[1]-x_lmc, y[1]-y_lmc, z[1]-z_lmc])
-        ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]* convtokpc_gyr2.value
-        ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]* convtokpc_gyr2.value
-        az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]* convtokpc_gyr2.value
+        ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]
+        ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]
+        az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]
         ax[1] += ax_lmc
         ay[1] += ay_lmc
         az[1] += az_lmc
@@ -280,20 +279,20 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
         r[0] = np.array([x[i], y[i], z[i]])
 
         if (disk==0):
-            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] * convtokpc_gyr2.value
-            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] * convtokpc_gyr2.value
-            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] * convtokpc_gyr2.value
-
+            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0]
+            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1]
+            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2]
+            print(ax[i])
         if (disk==1):
-            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[0]
-            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[1]
-            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] * convtokpc_gyr2.value + disk_bulge_a(x[i], y[i], z[i])[2]
+            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] + disk_bulge_a(x[i], y[i], z[i])[0]
+            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] + disk_bulge_a(x[i], y[i], z[i])[1]
+            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] + disk_bulge_a(x[i], y[i], z[i])[2]
 
         if (LMC==1):
             r_lmc[0] = np.array([x[i]-x_lmc, y[i]-y_lmc, z[i]-z_lmc])
-            ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]* convtokpc_gyr2.value
-            ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]* convtokpc_gyr2.value
-            az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]* convtokpc_gyr2.value
+            ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]
+            ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]
+            az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]
             ax[i] += ax_lmc
             ay[i] += ay_lmc
             az[i] += az_lmc
@@ -312,11 +311,11 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G,\
     n_points = int(time * 1/abs(h))
 
     #from kpc/gyrs to km/s
-    convtokms = 1 * units.kpc / units.Gyr
-    convtokms = convtokms.to(units.km/units.s)
+    #convtokms = 1 * units.kpc / units.Gyr
+    #convtokms = convtokms.to(units.km/units.s)
 
-    kpc_s2 = 1 * units.kpc / units.s**2
-    convtokpc_gyr2 = kpc_s2.to(units.kpc/units.Gyr**2)
+    #kpc_s2 = 1 * units.kpc / units.s**2
+    #convtokpc_gyr2 = kpc_s2.to(units.kpc/units.Gyr**2)
 
     t = np.zeros(n_points)
     x = np.zeros(n_points)
@@ -346,24 +345,18 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G,\
     extract(kwargs)
 
     if (disk==0):
-        ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0]\
-                * convtokpc_gyr2.value
-        ay[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][1]\
-                * convtokpc_gyr2.value
-        az[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][2]\
-                * convtokpc_gyr2.value
+        ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0]
+        ay[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][1]
+        az[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][2]
 
     if (disk==1):
         ax[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][0]\
-                * convtokpc_gyr2.value + disk_bulge_a(x[0], y[0],\
-                                                      z[0])[0]
+                + disk_bulge_a(x[0], y[0], z[0])[0]
 
         ay[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][1]\
-                * convtokpc_gyr2.value + disk_bulge_a(x[0], y[0],\
-                                                      z[0])[1]
+                + disk_bulge_a(x[0], y[0], z[0])[1]
         az[0] = -biff.gradient(r, S[0], T[0], G, Mass, R_s)[0][2]\
-                * convtokpc_gyr2.value + disk_bulge_a(x[0], y[0],\
-                                                      z[0])[2]
+                + disk_bulge_a(x[0], y[0], z[0])[2]
     # half step
     # Here I assume the host galaxy starts at position (0, 0, 0) and then its
     # initial v[1] is (0, 0, 0)
@@ -371,13 +364,13 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G,\
         r_lmc = np.zeros((1,3))
         r_lmc[0] = np.array([x[0]-x_lmc, y[0]-y_lmc, z[0]-z_lmc])
         ax_lmc = -biff.gradient(r_lmc, Slmc[0], Tlmc[0], G, Mass, \
-                                R_s_lmc)[0][0]*convtokpc_gyr2.value
+                                R_s_lmc)[0][0]
 
         ay_lmc = -biff.gradient(r_lmc, Slmc[0], Tlmc[0], G, Mass, \
-                                R_s_lmc)[0][1]*convtokpc_gyr2.value
+                                R_s_lmc)[0][1]
 
         az_lmc = -biff.gradient(r_lmc, Slmc[0], Tlmc[0], G, Mass, \
-                                R_s_lmc)[0][2]*convtokpc_gyr2.value
+                                R_s_lmc)[0][2]
         ax[0] += ax_lmc
         ay[0] += ay_lmc
         az[0] += az_lmc
@@ -395,37 +388,31 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G,\
 
     if (disk==0):
 
-        ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0]\
-                 * convtokpc_gyr2.value
-        ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1]\
-                 * convtokpc_gyr2.value
-        az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2]\
-                 * convtokpc_gyr2.value
+        ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0]
+        ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1]
+        az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2]
 
     if (disk==1):
 
-        ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0] \
-                * convtokpc_gyr2.value + disk_bulge_a(x[1], y[1],\
-                                                      z[1])[0]
-        ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1] \
-                 * convtokpc_gyr2.value + disk_bulge_a(x[1], y[1],\
-                  z[1])[1]
-        az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2] \
-                 * convtokpc_gyr2.value + disk_bulge_a(x[1], y[1],\
-                                                       z[1])[2]
+        ax[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][0]\
+                + disk_bulge_a(x[1], y[1], z[1])[0]
+        ay[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][1]\
+                + disk_bulge_a(x[1], y[1],  z[1])[1]
+        az[1] = -biff.gradient(r, S[1], T[1], G, Mass, R_s)[0][2]\
+                + disk_bulge_a(x[1], y[1], z[1])[2]
 
 
     if (LMC==1):
         r_lmc = np.zeros((1,3))
         r_lmc[0] = np.array([x[1]-x_lmc, y[1]-y_lmc, z[1]-z_lmc])
         ax_lmc = -biff.gradient(r_lmc, Slmc[1], Tlmc[1], G, Mass, \
-                                R_s_lmc)[0][0]*convtokpc_gyr2.value
+                                R_s_lmc)[0][0]
 
         ay_lmc = -biff.gradient(r_lmc, Slmc[1], Tlmc[1], G, Mass, \
-                                R_s_lmc)[0][1]*convtokpc_gyr2.value
+                                R_s_lmc)[0][1]
 
         az_lmc = -biff.gradient(r_lmc, Slmc[1], Tlmc[1], G, Mass, \
-                                R_s_lmc)[0][2]*convtokpc_gyr2.value
+                                R_s_lmc)[0][2]
         ax[1] += ax_lmc
         ay[1] += ay_lmc
         az[1] += az_lmc
@@ -444,40 +431,31 @@ def integrate_biff_t(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G,\
         r[0] = np.array([x[i], y[i], z[i]])
 
         if (disk==0):
-            ax[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][0]\
-                     * convtokpc_gyr2.value
-            ay[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][1]\
-                     * convtokpc_gyr2.value
-            az[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][2]\
-                     * convtokpc_gyr2.value
+            ax[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][0]
+            ay[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][1]
+            az[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][2]
 
         if (disk==1):
             ax[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][0]\
-                     * convtokpc_gyr2.value + disk_bulge_a(x[i],\
-                                                           y[i],
-                                                           z[i])[0]
+                     + disk_bulge_a(x[i], y[i], z[i])[0]
 
             ay[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][1]\
-                      * convtokpc_gyr2.value + disk_bulge_a(x[i],\
-                                                            y[i],\
-                                                            z[i])[1]
+                    + disk_bulge_a(x[i], y[i], z[i])[1]
 
             az[i] = -biff.gradient(r, S[i], T[i], G, Mass, R_s)[0][2]\
-                     * convtokpc_gyr2.value + disk_bulge_a(x[i],\
-                                                           y[i],\
-                                                           z[i])[2]
+                    + disk_bulge_a(x[i], y[i], z[i])[2]
 
         if (LMC==1):
             r_lmc = np.zeros((1,3))
             r_lmc[0] = np.array([x[1]-x_lmc, y[i]-y_lmc, z[i]-z_lmc])
             ax_lmc = -biff.gradient(r_lmc, Slmc[i], Tlmc[i], G, Mass, \
-                                    R_s_lmc)[0][0]*convtokpc_gyr2.value
+                                    R_s_lmc)[0][0]
 
             ay_lmc = -biff.gradient(r_lmc, Slmc[i], Tlmc[i], G, Mass, \
-                                    R_s_lmc)[0][1]*convtokpc_gyr2.value
+                                    R_s_lmc)[0][1]
 
             az_lmc = -biff.gradient(r_lmc, Slmc[i], Tlmc[i], G, Mass, \
-                                    R_s_lmc)[0][2]*convtokpc_gyr2.value
+                                    R_s_lmc)[0][2]
             ax[i] += ax_lmc
             ay[i] += ay_lmc
             az[i] += az_lmc

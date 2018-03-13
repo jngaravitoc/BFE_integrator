@@ -13,6 +13,14 @@ sys.path.insert(0, '../../MW_anisotropy/code/')
 import density_tools
 
 
+def read_orbit(snap):
+    orbit = np.loadtxt(snap)
+    t = orbit[:,0]
+    x = orbit[:,1]
+    y = orbit[:,2]
+    z = orbit[:,3]
+    return t, x, y, z
+
 def orbit_lmc(path):
     orbit = np.loadtxt(path)
     xmw = orbit[:,0]
@@ -71,12 +79,12 @@ def BFE_density(Snlm, Tnlm,  true_M, true_r_s, xmin, xmax, ymin, ymax, nbinsx, n
         r_s2 = kwargs['r_s2']
         ylmc = kwargs['ylmc']
         zlmc = kwargs['zlmc']
-
+        print(ylmc, zlmc)
         y_bins2 = np.linspace(ylmc-xmin, ylmc-xmax, nbinsx)
         z_bins2 = np.linspace(zlmc-ymin, zlmc-ymax, nbinsy)
         y2, z2 = np.meshgrid(y_bins2, z_bins2)
         pos2 = np.array([np.ones(len(y2.flatten()))*z_plane, y2.flatten(), z2.flatten()]).T
-        rho_bfe2 =  biff.density(np.ascontiguousarray(pos2.astype(np.double)), S2, T2, M2, r_s2)
+        rho_bfe2 = biff.density(np.ascontiguousarray(pos2.astype(np.double)), S2, T2, M2, r_s2)
 
 
     return  rho_bfe, rho_bfe2
@@ -110,6 +118,7 @@ def N_body_potential(pos, pot, rmax=50, nbins=20):
 if __name__ == "__main__":
 
 
+
     #coeff_path = sys.argv[1]
     #coeff_path = './coefficients/ST_MWST_MW_beta0_LMC6_6.26M_snap_0.txt'
     #coeff_path = './coefficients/ST_MWST_MW_beta0_40M_snap_0_n20_l2.txt'
@@ -127,32 +136,16 @@ if __name__ == "__main__":
 
     rmax = 300
 
-    #path_snap = './test_halo/LMC6_6.25M_vir_000'
-    #path_snap = './test_halo/MW2_40M_vir_000'
-    # Read coefficients
-    S, T = orbit.read_coefficients(coeff_path1, 1, nmax, lmax)
-    S2, T2 = orbit.read_coefficients(coeff_path2, 1, nmax, lmax)
-    #print(S, T)
-    # Compute densities
-    #mass = pygadgetreader.readsnap(path_snap, 'mass', 'dm')
-
-    #mass = pygadgetreader.readsnap(path_snap, 'mass', 'dm')
-    #M_halo = np.sum(mass)
-    print(M_halo)
     r_s = 40.82
     #r_s = 25.158
     #r_s = 2.5158
     G = 43007.1
+
     # read sim
-
-    #pos = pygadgetreader.readsnap(path_snap, 'pos', 'dm')
-    #pot = pygadgetreader.readsnap(path_snap, 'pot', 'dm')
-
+    #path_snap = './test_halo/LMC6_6.25M_vir_000'
     path_lmc_orbit = './orbits/MWLMC6_100M_b0_orbit_2.txt'
     xmw, ymw, zmw, xlmc, ylmc, zlmc = orbit_lmc(path_lmc_orbit)
-    rcm = [xmw[114], ymw[114], zmw[114]]
-    pos_cm = re_center_halo(pos, rcm)
-
+    #path_snap = './test_halo/MW2_40M_vir_000'
     nbinsx = 100
     nbinsy = 100
     xmin = -300
@@ -163,28 +156,67 @@ if __name__ == "__main__":
     nn = 1000
 
     # LMC orbit
+    # Read coefficients
+    static = read_orbit('./test_obit_LMC6')
+    t_st = static[0]
+    x_st = static[1]
+    y_st = static[2]
+    z_st = static[3]
+    tevol = read_orbit('./test_obit_LMC6_tevol')
 
+    t_t = tevol[0]
+    x_t = tevol[1]
+    y_t = tevol[2]
+    z_t = tevol[3]
 
-    # BFE
-    rho_BFE, rho_BFE2 = BFE_density(S[0], T[0], 1, r_s, xmin, xmax, ymin, ymax,\
-                                    nbinsx, nbinsy, z_plane, S2 = S2[0]/1E10, T2 = T2[0]/1E10,\
-                                    M2 = 1, r_s2 = 25.158, ylmc=ylmc[114], zlmc=zlmc[114])
+    for i in range(0, 114):
+        coeff_path1 ='./coefficients/ST_MWST_MWLMC6_beta0_100M_snap_{:0>3d}_n20_l2.txt'.format(i)
+        coeff_path2 = './coefficients/ST_LMCST_MWLMC6_beta0_100M_snap_{:0>3d}_n20_l2.txt'.format(i)
+        S, T = orbit.read_coefficients(coeff_path1, 1, nmax, lmax)
+        S2, T2 = orbit.read_coefficients(coeff_path2, 1, nmax, lmax)
+        #print(S, T)
+        # Compute densities
+        #mass = pygadgetreader.readsnap(path_snap, 'mass', 'dm')
 
-    rho_BFE_mat1 = rho_BFE.reshape(nbinsx, nbinsy)
-    rho_BFE_mat2 = rho_BFE2.reshape(nbinsx, nbinsy)
+        #mass = pygadgetreader.readsnap(path_snap, 'mass', 'dm')
+        #pos = pygadgetreader.readsnap(path_snap, 'pos', 'dm')
+        #pot = pygadgetreader.readsnap(path_snap, 'pot', 'dm')
 
-    rho_BFE_mat = rho_BFE_mat1 +  rho_BFE_mat2
+        #rcm = [xmw[114], ymw[114], zmw[114]]
+        #pos_cm = re_center_halo(pos, rcm)
 
-    # N-body
-    #rho_NB = density_tools.density_nn(pos, nbinsx+1, nbinsy+1, z_plane, nn, xmin, xmax, ymin, ymax)
+        # BFE
+        rho_BFE, rho_BFE2 = BFE_density(S[0], T[0], 1, r_s, xmin, xmax, ymin, ymax,\
+                                        nbinsx, nbinsy, z_plane, S2 = S2[0]/1E10, T2 = T2[0]/1E10,\
+                                        M2 = 1, r_s2 = 25.158, ylmc=ylmc[i], zlmc=zlmc[i])
+ 
+        rho_BFE_mat1 = rho_BFE.reshape(nbinsx, nbinsy)
+        rho_BFE_mat2 = rho_BFE2.reshape(nbinsx, nbinsy)
 
-    #density_tools.density_peaks((rho_BFE_mat/rho_NB-1)*100, xmin=-300,\
-    #                             xmax=300, ymin=-300, ymax=300, fsize=(6, 6))#, vmin=-1, vmax=-0.9, levels=np.arange(-1, 1, 0.01))
+        rho_BFE_mat = rho_BFE_mat1 + rho_BFE_mat2
 
-    density_tools.density_peaks(np.log(rho_BFE_mat)/np.max(np.log(rho_BFE_mat)), xmin=-300,\
-                                 xmax=300, ymin=-300, ymax=300, fsize=(6, 6))
+        # N-body
+        #rho_NB = density_tools.density_nn(pos, nbinsx+1, nbinsy+1, z_plane, nn, xmin, xmax, ymin, ymax)
 
-    plt.savefig('bfe_2ddensity_MWLMC6_t1.pdf', bbox_inches='tight')
-    plt.close()
+        #density_tools.density_peaks((rho_BFE_mat/rho_NB-1)*100, xmin=-300,\
+        #                             xmax=300, ymin=-300, ymax=300, fsize=(6, 6))#, vmin=-1, vmax=-0.9, levels=np.arange(-1, 1, 0.01))
+        density_tools.density_peaks((np.log(rho_BFE_mat.T))/np.abs(np.max(np.log(rho_BFE_mat))), xmin=-300,\
+                                     xmax=300, ymin=-300, ymax=300,\
+                                     fsize=(6, 6), levels=np.arange(-2.4, -1, 0.01),\
+                                     vmin=-2.4, vmax=-1 )
+        #plt.plot(y_t[:i], z_t[:i], c='k')
+        #plt.plot(y_st[:i], z_st[:i], c='k', alpha=0.6, ls='--')
+
+        #plt.scatter(y_t[i], z_t[i], c='k', marker='*', s=180, label='Time Evolving MW+LMC')
+        #plt.scatter(y_st[i], z_st[i], c='k', alpha=0.6, label='Static MW')
+        #plt.legend(loc='Upper left', fontsize=15)
+        plt.xlabel('$y[kpc]$')
+        plt.ylabel('$z[kpc]$')
+        plt.xticks(np.arange(-300, 301, 100))
+        plt.yticks(np.arange(-300, 301, 100))
+        plt.tick_params(axis='both', which='major', labelsize=18)
+
+        plt.savefig('bfe_2ddensity_MWLMC6_snap_{:0>3d}.png'.format(i), bbox_inches='tight')
+        plt.close()
 
 

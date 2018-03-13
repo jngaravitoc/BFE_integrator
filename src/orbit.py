@@ -76,6 +76,14 @@ def read_coefficients(path, tmax, nmax, lmax):
 
     return np.ascontiguousarray(S_nlm), np.ascontiguousarray(T_nlm)
 
+def read_coeff_files(path, snap1, snap2, tmax, nmax, lmax):
+    t = snap2-snap1+1
+    S_nlm_all = np.zeros((t, nmax+1, lmax+1, lmax+1))
+    T_nlm_all = np.zeros((t, nmax+1, lmax+1, lmax+1))
+    for i in range(snap1, snap2+1):
+        S_nlm_all[i] = read_coefficients(path+'{:0>3d}_n20_l2.txt'.format(i), 1, nmax, lmax)[0]
+        T_nlm_all[i] = read_coefficients(path+'{:0>3d}_n20_l2.txt'.format(i), 1, nmax, lmax)[1]
+    return S_nlm_all, T_nlm_all
 
 def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb,\
                file_name):
@@ -168,17 +176,15 @@ if __name__ == "__main__":
 
     M = 1
     G_c = constants.G
-    G_c = G_c.to(u.kiloparsec**3 / (u.s**2 * u.Msun))
-    G_c2 = G_c.to(u.kiloparsec**3 / (u.Gyr**2 * u.Msun))
-    g_fact = 43007.1/(G_c2.value*1E10)
-
+    G_c = G_c.to(u.kiloparsec*u.km**2/ (u.s**2 * u.Msun))*1E10
+    print(G_c)
     N_snaps=1
 
     if (static==0):
-        times_nbody = np.loadtxt(path_times)
-        dt_nbody = times_nbody[1] - times_nbody[0]
-        N_snaps = len(times_nbody)
-        t_nbody = times_nbody[-1] - times_nbody[0]
+        #times_nbody = np.loadtxt(path_times)
+        dt_nbody = 0.02#times_nbody[1] - times_nbody[0]
+        N_snaps = 115 #len(times_nbody)
+        t_nbody = 2.28#times_nbody[-1] - times_nbody[0]
 
         if (t_nbody < time):
              print('Integration time requested {:.2f} larger than the'\
@@ -186,8 +192,12 @@ if __name__ == "__main__":
              exit(0)
 
     print(N_snaps)
-    S_nlm, T_nlm = read_coefficients(path_coeff, N_snaps, nmax, lmax)
-    print(np.shape(S_nlm), np.shape(T_nlm))
+    #S_nlm, T_nlm = read_coefficients(path_coeff, N_snaps, nmax, lmax)
+    #print(np.shape(S_nlm), np.shape(T_nlm))
+    S_nlm, T_nlm = read_coeff_files(path_coeff, 0, 114,\
+                                            N_snaps, nmax,\
+                                            lmax)
+
 
     if (static==0):
         print('Interpolating coefficients')
@@ -200,16 +210,17 @@ if __name__ == "__main__":
 
 
     if (LMC==1):
-        S_nlm_lmc, T_nlm_lmc = read_coefficients(path_coeff_lmc,\
-                                                 N_snaps, nmax_lmc,\
-                                                 lmax_lmc)
-
+        S, T = read_coeff_files(path_coeff_lmc, 0, 114,\
+                                                N_snaps, nmax_lmc,\
+                                                lmax_lmc)
+        S_nlm_lmc = S/1E10
+        T_nlm_lmc = T/1E10
         if (static==1):
             t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
             = leapfrog_bfe.integrate_biff(x_init, y_init, z_init,\
                                           vx_init, vy_init, vz_init,\
                                           time, S_nlm[0], T_nlm[0], \
-                                          G_c.value*g_fact, M, r_s,\
+                                          G_c.value, M, r_s,\
                                           interp_dt, disk, LMC=LMC,\
                                           Slmc=S_nlm_lmc[0],\
                                           Tlmc=T_nlm_lmc[0], x_lmc=-1,\
@@ -230,7 +241,7 @@ if __name__ == "__main__":
             = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
                                             vx_init, vy_init, vz_init,\
                                             time, S_interp, T_interp,\
-                                            G_c.value*g_fact, M, r_s,\
+                                            G_c.value, 1, r_s,\
                                             interp_dt, disk, LMC=LMC,\
                                             Slmc=S_interp_lmc,\
                                             Tlmc=T_interp_lmc,\
@@ -245,17 +256,17 @@ if __name__ == "__main__":
             = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
                                             vx_init, vy_init, vz_init,\
                                             time, S_interp, T_interp,\
-                                            G_c.value*g_fact, M, r_s,\
+                                            G_c.value, M, r_s,\
                                             interp_dt, disk)
 
         elif (static==1):
             print('Integrating orbit')
             t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
-            = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
-                                            vx_init, vy_init, vz_init,\
-                                            time, S_nlm, T_nlm,\
-                                            G_c.value*g_fact, M, r_s,\
-                                            interp_dt, disk)
+            = leapfrog_bfe.integrate_biff(x_init, y_init, z_init,\
+                                           vx_init, vy_init, vz_init,\
+                                           time, S_nlm[0], T_nlm[0],\
+                                           G_c.value, M, r_s,\
+                                           interp_dt, disk, LMC=0)
 
     print('Writing data')
 
