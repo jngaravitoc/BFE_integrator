@@ -10,4 +10,4 @@ matrix:
     python: "3.5"
     env: TEST_SUITE="10"
     
-script: ./src/orbit.py $TEST_SUIT
+script: python ./src/orbit.py $TEST_SUIT
