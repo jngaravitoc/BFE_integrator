@@ -148,12 +148,12 @@ if __name__ == "__main__":
     #path_snap = './test_halo/MW2_40M_vir_000'
     nbinsx = 100
     nbinsy = 100
-    xmin = -300
-    xmax = 300
-    ymin = -300
-    ymax = 300
+    xmin = -250
+    xmax = 250
+    ymin = -250
+    ymax = 250
     z_plane = 10
-    nn = 1000
+    nn = 10000
 
     # LMC orbit
     # Read coefficients
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     y_t = tevol[2]
     z_t = tevol[3]
 
-    for i in range(0, 114):
+    for i in range(113, 114):
         coeff_path1 ='./coefficients/ST_MWST_MWLMC6_beta0_100M_snap_{:0>3d}_n20_l2.txt'.format(i)
         coeff_path2 = './coefficients/ST_LMCST_MWLMC6_beta0_100M_snap_{:0>3d}_n20_l2.txt'.format(i)
         S, T = orbit.read_coefficients(coeff_path1, 1, nmax, lmax)
@@ -200,23 +200,44 @@ if __name__ == "__main__":
 
         #density_tools.density_peaks((rho_BFE_mat/rho_NB-1)*100, xmin=-300,\
         #                             xmax=300, ymin=-300, ymax=300, fsize=(6, 6))#, vmin=-1, vmax=-0.9, levels=np.arange(-1, 1, 0.01))
-        density_tools.density_peaks((np.log(rho_BFE_mat.T))/np.abs(np.max(np.log(rho_BFE_mat))), xmin=-300,\
-                                     xmax=300, ymin=-300, ymax=300,\
+        density_tools.density_peaks((np.log(rho_BFE_mat.T))/np.abs(np.max(np.log(rho_BFE_mat))),
+                                     xmin=-250,\
+                                     xmax=250, ymin=-250, ymax=250,\
                                      fsize=(6, 6), levels=np.arange(-2.4, -1, 0.01),\
-                                     vmin=-2.4, vmax=-1 )
+                                     vmin=-2.4, vmax=-1,\
+                                     lmc_orbit_cartesian=path_lmc_orbit)
         #plt.plot(y_t[:i], z_t[:i], c='k')
         #plt.plot(y_st[:i], z_st[:i], c='k', alpha=0.6, ls='--')
 
         #plt.scatter(y_t[i], z_t[i], c='k', marker='*', s=180, label='Time Evolving MW+LMC')
         #plt.scatter(y_st[i], z_st[i], c='k', alpha=0.6, label='Static MW')
         #plt.legend(loc='Upper left', fontsize=15)
-        plt.xlabel('$y[kpc]$')
-        plt.ylabel('$z[kpc]$')
-        plt.xticks(np.arange(-300, 301, 100))
-        plt.yticks(np.arange(-300, 301, 100))
-        plt.tick_params(axis='both', which='major', labelsize=18)
 
-        plt.savefig('bfe_2ddensity_MWLMC6_snap_{:0>3d}.png'.format(i), bbox_inches='tight')
+        # Remove axis names
+        frame1 = plt.gca()
+        frame1.axes.get_xaxis().set_visible(False)
+        frame1.axes.get_yaxis().set_visible(False)
+        #-------------------------------- circles ------------------------
+        theta = np.linspace(-np.pi, np.pi, 200)
+        plt.plot(50*np.cos(theta), 50*np.sin(theta), c='k', ls='--', lw=0.4)
+        #plt.plot(100*np.cos(theta), 100*np.sin(theta), c='k', ls='--', lw=0.4)
+        plt.plot(150*np.cos(theta), 150*np.sin(theta), c='k', ls='--', lw=0.4)
+        plt.plot(280*np.cos(theta), 280*np.sin(theta), c='k', ls='--', lw=0.4)
+
+        #plt.xlabel(r'$\mathrm{y\, [kpc]}$')
+        #plt.ylabel(r'$\mathrm{z\, [kpc]}$')
+        plt.plot(np.linspace(-200, -100, 10), np.ones(10)*(-200), c='k', lw=2)
+        plt.text(-200, -190, r'$\mathrm{100\, kpc}$', color='k', size=20)
+        plt.text(-25, 52, r'$\mathrm{50\, kpc}$', color='k', size=12)
+        plt.text(-25, 152, r'$\mathrm{150\, kpc}$', color='k', size=12)
+        plt.text(150, 180, r'$\mathrm{R_{vir}:280\, kpc}$', color='k', size=10,rotation=315)
+
+        plt.xticks(np.arange(-250, 251, 100))
+        plt.yticks(np.arange(-250, 251, 100))
+        plt.tick_params(axis='both', which='major', labelsize=18)
+        plt.xlim(-250, 250)
+        plt.ylim(-250, 250)
+        plt.savefig('bfe_2ddensity_MWLMC6_snap_{:0>3d}.png'.format(i), bbox_inches='tight', pad_inches=0)
         plt.close()
 
 
