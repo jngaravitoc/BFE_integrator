@@ -57,6 +57,8 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
                     print(len(time_array), len(S[:,i,j,k]))
                     f = interpolate.interp1d(time_array, S[:,i,j,k])
                     S_new[:,i,j,k] = f(time_array_new)
+                    f2 = interpolate.interp1d(time_array, T[:,i,j,k])
+                    T_new[:,i,j,k] = f2(time_array_new)
 
     return S_new, T_new
 
