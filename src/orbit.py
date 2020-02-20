@@ -5,7 +5,7 @@ from astropy import constants
 from astropy import units as u
 import sys
 import leapfrog_bfe
-
+import coefficients_smoothing
 
 def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
     """
@@ -62,6 +62,40 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
 
     return S_new, T_new
 
+def load_scf_coefficients(coeff_files, nmax, lmax, mmax, pmass, sn):
+    """
+    Load coefficients.
+    ## this is the s/n sample to take the mean values of the coefficients!
+    min_sample: n_min = 0
+    max_sample: nmax = 1 
+    # pmass : particle mass
+    # sn
+    """
+
+    #ncoeff_sample = max_sample - min_sample
+    print(pmass)
+    print(coeff_files)
+    data = np.loadtxt(coeff_files)
+    S = data[:,0]
+    SS = data[:,1]
+    T = data[:,2]
+    TT = data[:,3]
+    ST = data[:,4]
+    S = coefficients_smoothing.reshape_matrix(S, 20, 20, 20)
+    SS = coefficients_smoothing.reshape_matrix(SS, 20, 20, 20)
+    T = coefficients_smoothing.reshape_matrix(T, 20, 20, 20)
+    TT = coefficients_smoothing.reshape_matrix(TT, 20, 20, 20)
+    ST = coefficients_smoothing.reshape_matrix(ST, 20, 20, 20)
+
+    S_smooth, T_smooth, N_smooth = coefficients_smoothing.smooth_coeff_matrix(S, T, SS, TT, ST,\
+                                                                              pmass,\
+                                                                              nmax,\
+                                                                              lmax,\
+                                                                              mmax,\
+                                                                              sn,\
+                                                                              sn_out=0)
+    return S_smooth, T_smooth
+
 
 def read_coefficients(path, tmax, nmax, lmax):
     """
@@ -77,6 +111,37 @@ def read_coefficients(path, tmax, nmax, lmax):
     T_nlm = T.reshape(tmax, nmax+1, lmax+1, lmax+1)
 
     return np.ascontiguousarray(S_nlm), np.ascontiguousarray(T_nlm)
+
+def read_coefficients_smooth(coeff_files, pmass, 
+                             tmax, nmax, lmax, sn=4):
+    """
+    Function that reads the coefficients.
+    """
+
+    S, T = load_scf_coefficients(coeff_files, nmax, lmax, nmax, pmass, sn)
+
+    S_nlm = S.reshape(tmax, nmax+1, lmax+1, lmax+1)
+    T_nlm = T.reshape(tmax, nmax+1, lmax+1, lmax+1)
+
+    return np.ascontiguousarray(S_nlm), np.ascontiguousarray(T_nlm)
+
+def read_coeff_files_smooth(coeff_files, snap1, snap2, nmax, lmax, backwards=0):
+    pmass = 1.577212515257997438e-06
+    sn=4
+    t = snap2-snap1+1
+    print("total time = {}".format(int(t)))
+    S_nlm_all = np.zeros((t, nmax+1, lmax+1, lmax+1))
+    T_nlm_all = np.zeros((t, nmax+1, lmax+1, lmax+1))
+
+    for i in range(snap1, snap2+1):
+        S_nlm_all[i], T_nlm_all[i] = read_coefficients_smooth(coeff_files+'{:0>3d}.txt'.format(i), pmass, 1, nmax, lmax, sn)
+
+    if backwards==1:
+        return S_nlm_all[::-1], T_nlm_all[::-1]
+    elif bacwards==0:
+        return S_nlm_all, T_nlm_all
+
+
 
 def read_coeff_files(path, snap1, snap2, tmax, nmax, lmax):
     t = snap2-snap1+1
@@ -106,7 +171,7 @@ def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb,\
 if __name__ == "__main__":
 
 
-    if(len(sys.argv)!=22):
+    if(len(sys.argv)!=23):
 
         print('///////////////////////////////////////////////////////////////')
         print('')
@@ -133,6 +198,7 @@ if __name__ == "__main__":
         print('nmax_lmc : nmax for the lmc')
         print('lmax_lmc : lmax for the lmc')
         print('r_s_lmc : r_s for the lmc')
+        print('backwards : 0 (no) 1 (yes)')
         print('')
         print('////////////////////////////////////////////////////////////////')
         exit(0)
@@ -176,6 +242,8 @@ if __name__ == "__main__":
     lmax_lmc = int(sys.argv[20])
     r_s_lmc = float(sys.argv[21])
 
+    backwards = int(sys.argv[22])
+
     M = 1
     G_c = constants.G
     G_c = G_c.to(u.kiloparsec*u.km**2/ (u.s**2 * u.Msun))*1E10
@@ -196,9 +264,13 @@ if __name__ == "__main__":
     print(N_snaps)
     #S_nlm, T_nlm = read_coefficients(path_coeff, N_snaps, nmax, lmax)
     #print(np.shape(S_nlm), np.shape(T_nlm))
-    S_nlm, T_nlm = read_coeff_files(path_coeff, 0, 114,\
-                                            N_snaps, nmax,\
-                                            lmax)
+    #S_nlm, T_nlm = read_coeff_files(path_coeff, 0, 114,\
+    #                                        N_snaps, nmax,\
+    #                                        lmax)
+
+    S_nlm, T_nlm = read_coeff_files_smooth(path_coeff, 0, 114,\
+                                           nmax,\
+                                           lmax, backwards)
 
 
     if (static==0):
@@ -212,7 +284,7 @@ if __name__ == "__main__":
 
 
     if (LMC==1):
-        S, T = read_coeff_files(path_coeff_lmc, 0, 114,\
+        S, T = read_coeff_files(path_coeff_lmc, 0, 102,\
                                                 N_snaps, nmax_lmc,\
                                                 lmax_lmc)
         S_nlm_lmc = S/1E10
