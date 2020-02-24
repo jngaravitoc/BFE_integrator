@@ -42,7 +42,7 @@ def interpolate_coeff(S, T, dt_nbody, dt_int, time, nmax, lmax):
 
     # time arrays
     print(time, dt_nbody)
-    time_array = np.linspace(0, time, time/dt_nbody+2)
+    time_array = np.linspace(0, time, time/dt_nbody+1)
     time_array_new = np.linspace(0, time, time/dt_int+2)
 
     ## Coefficient Matrices size: [time, nmax+1, lmax+1, lmax+1]
@@ -138,7 +138,7 @@ def read_coeff_files_smooth(coeff_files, snap1, snap2, nmax, lmax, backwards=0):
 
     if backwards==1:
         return S_nlm_all[::-1], T_nlm_all[::-1]
-    elif bacwards==0:
+    elif backwards==0:
         return S_nlm_all, T_nlm_all
 
 
@@ -253,8 +253,8 @@ if __name__ == "__main__":
     if (static==0):
         #times_nbody = np.loadtxt(path_times)
         dt_nbody = 0.02#times_nbody[1] - times_nbody[0]
-        N_snaps = 115 #len(times_nbody)
-        t_nbody = 2.28#times_nbody[-1] - times_nbody[0]
+        N_snaps = 108 #len(times_nbody)
+        t_nbody = 2.16#times_nbody[-1] - times_nbody[0]
 
         if (t_nbody < time):
              print('Integration time requested {:.2f} larger than the'\
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     #                                        N_snaps, nmax,\
     #                                        lmax)
 
-    S_nlm, T_nlm = read_coeff_files_smooth(path_coeff, 0, 114,\
+    S_nlm, T_nlm = read_coeff_files_smooth(path_coeff, 0, 108,\
                                            nmax,\
                                            lmax, backwards)
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 
 
     if (LMC==1):
-        S, T = read_coeff_files(path_coeff_lmc, 0, 102,\
+        S, T = read_coeff_files(path_coeff_lmc, 0, 101,\
                                                 N_snaps, nmax_lmc,\
                                                 lmax_lmc)
         S_nlm_lmc = S/1E10
@@ -325,20 +325,22 @@ if __name__ == "__main__":
 
     elif (LMC==0):
         if (static==0):
+            ### TODO : make inter_dt as an input parameter! this controls time
+            ### TODO : directon
             print('Integrating orbit')
             t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
             = leapfrog_bfe.integrate_biff_t(x_init, y_init, z_init,\
                                             vx_init, vy_init, vz_init,\
                                             time, S_interp, T_interp,\
                                             G_c.value, M, r_s,\
-                                            interp_dt, disk)
+                                            -interp_dt, disk, LMC=0)
 
         elif (static==1):
             print('Integrating orbit')
             t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb\
             = leapfrog_bfe.integrate_biff(x_init, y_init, z_init,\
                                            vx_init, vy_init, vz_init,\
-                                           time, S_nlm[0], T_nlm[0],\
+                                           time, S_nlm[-1], T_nlm[-1],\
                                            G_c.value, M, r_s,\
                                            interp_dt, disk, LMC=0)
 

@@ -14,8 +14,10 @@ def extract(dct, namespace=None):
 
 
 def disk_bulge_a(x, y, z):
-    a_bulge = a_hernquist(0.7, x, y, z, 1.4E10)
-    a_disk = a_mn(0.638, 1.7, x, y, z, 5.78E10)
+    #a_bulge = a_hernquist(0.7, x, y, z, 1.4E10)
+    a_bulge = a_hernquist(0.7, x, y, z, 1E10)
+    #a_disk = a_mn(0.638, 1.7, x, y, z, 5.78E10)
+    a_disk = a_mn(3.5, 0.53, x, y, z, 5.5E10)
     ax = a_bulge[0] + a_disk[0]
     ay = a_bulge[1] + a_disk[1]
     az = a_bulge[2] + a_disk[2]
