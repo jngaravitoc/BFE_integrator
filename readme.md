@@ -8,6 +8,5 @@ The time-dependent potential use the Basis Field Expansions formalism.
 
 - Fix Travis issues
 - Implement Classes
-- Think of other integrator to use besided Leapfrog.
-- Code should work also in parallel.
-- Code should be flexible to integrate many orbits at the same time.
+- Parallel implementation
+- Code should be flexible to integrate many orbits at the same time
