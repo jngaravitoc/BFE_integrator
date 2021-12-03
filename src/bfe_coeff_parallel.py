@@ -57,13 +57,12 @@ Important:
 
 If comparison wants to be done with Gadget orbits
 please use the gravitational constant G of Gadget
-G=43007.1 km^2 * kpc/(s^2 Msun * 1E10). 
+G=43007.1 km^2 * kpc/(s^2 Msun * 1E10).
 This is what the code uses as default
 see: https://github.com/jngaravitoc/MW_anisotropy/blob/master/code/equilibrium/G_units_gadget.ipynb
 
 
-to-do:
-------
+TODO:
 - free memory
 - Truncate halo
 
@@ -334,7 +333,7 @@ def main(pool, path, snap_name, init_snap, final_snap, nmax, lmax,
     ###############################################################
 
     worker = Worker(path, snap_name, init_snap, final_snap, nmax,
-                    lmax, r_s_mw, nmax_lmc, lmax_lmc, r_s_lmc, 
+                    lmax, r_s_mw, nmax_lmc, lmax_lmc, r_s_lmc,
                     out_name, LMC, Nhalo)
 
     tasks = list(range(N_snaps+init_snap))
@@ -372,7 +371,7 @@ if __name__ == "__main__":
         #print('Writing coefficients')
         #write_coefficients(S_mw, T_mw, times, 'MW'+ out_name, N_snaps,\
         #                   nmax, lmax, r_s_mw, path)
-        # 
+        #
         #write_coefficients(S_lmc, T_lmc, times, 'LMC'+ out_name,\
         #                   N_snaps, nmax_lmc, lmax_lmc, r_s_lmc, path)
     from argparse import ArgumentParser

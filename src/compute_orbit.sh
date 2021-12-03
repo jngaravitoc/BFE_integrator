@@ -8,19 +8,23 @@ vx_in="0"
 vy_in="100"
 vz_in="-50"
 
-time="2.2"
+#time="2.2"
+time="2.12"
 orbit_dt="0.01"
 static="1"
 
 r_s="40.85"
 nmax="20"
-lmax="5"
+#lmax="5"
+lmax="20"
 
 
 
-path_coeff="./coefficients/ST_MWST_MWLMC6_beta0_100M_snap_"
+#path_coeff="./coefficients/ST_MWST_MWLMC6_beta0_100M_snap_"
+path_coeff="/home/xzk/work/github/time-dependent-BFE/data/BFE_MWLMC5_b1snap_"
+
 path_times="./coefficients/ST_MWST_MWLMC6_beta0_100M_snap_"
-orbit_name="test_obit_LMC6"
+orbit_name="test_obit_wake3"
 disk="0"
 
 LMC="0"
@@ -29,9 +33,10 @@ nmax_lmc="20"
 lmax_lmc="5"
 r_s_lmc="25"
 
+backwards="1"
 
 python3 orbit.py $x_in $y_in $z_in $vx_in $vy_in $vz_in $time\
                  $orbit_dt $static $r_s $nmax $lmax $path_coeff\
                  $path_times $orbit_name $disk $LMC $path_coeff_LMC\
-                 $nmax_lmc $lmax_lmc $r_s_lmc
+                 $nmax_lmc $lmax_lmc $r_s_lmc $backwards
 

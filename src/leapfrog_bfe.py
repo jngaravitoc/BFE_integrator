@@ -148,7 +148,7 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     S : Matrix with the coefficients Snlm
     T : Matrix with the coefficients Tnlm
     G : gravitational constant in units of kpc/s
-    Mass : 
+    Mass :
     R_s : Dark Matter halo scale lenght
     dt : time step between integration points.
     disk : if a disk is present disk=1, default disk=0
@@ -166,7 +166,7 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     Returns:
     --------
 
-    to - do:
+    TODO: 
     --------
     1. Backwards integration.
     2. Combine both the orbit integration functions, the time
