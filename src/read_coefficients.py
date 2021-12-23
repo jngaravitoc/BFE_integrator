@@ -80,7 +80,7 @@ def read_coefficients(path, tmax, nmax, lmax):
 
     S_nlm = S.reshape(tmax, nmax+1, lmax+1, lmax+1)
     T_nlm = T.reshape(tmax, nmax+1, lmax+1, lmax+1)
-    print('Coefficients loades with shape: tmax={}, nmax={}, lmax={}'.(tmax, nmax, lmax)
+    print('Coefficients loaded with shape: tmax={}, nmax={}, lmax={}'.format(tmax, nmax, lmax))
 
     return np.ascontiguousarray(S_nlm), np.ascontiguousarray(T_nlm)
 

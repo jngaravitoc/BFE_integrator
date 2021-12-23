@@ -61,7 +61,7 @@ class BFE_fields:
 		self.theta = np.arccos(pos[:,2]/self.r) # cos(theta)
 		self.phi = np.arctan2(pos[:,1], pos[:,0])
 		self.s = self.r/self.rs.value
-		self.G = constants.G
+		self.G = G
 		self.M = M*u.Msun
 		self.S = S
 		self.T = T

@@ -1,12 +1,13 @@
+"""
+Example of computing and orbit using BFE
+
+"""
+
 import numpy as np
-import biff
 from astropy import constants
 from astropy import units as u
 import sys
 import leapfrog_bfe
-
-
-
 
 
 def print_orbit(t_orb, x_orb, y_orb, z_orb, vx_orb, vy_orb, vz_orb,\

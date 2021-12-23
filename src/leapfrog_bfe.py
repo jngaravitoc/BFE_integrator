@@ -1,7 +1,17 @@
+"""
+Script to integrate orbits in analytic Hernquist halos or BFE halos.
+The potential for the disk and the bulge is also supported
+
+TODO:
+-----
+1. Make postions and velocities 3d arrays!
+
+"""
+
 import numpy as np
 from astropy import units, constants
-import biff
-from soda.profiles import a_hernquist, a_mn
+import bfe_fields as bfe
+from profiles import Hernquist, MN
 
 
 def extract(dct, namespace=None):
@@ -15,18 +25,25 @@ def extract(dct, namespace=None):
 
 def disk_bulge_a(x, y, z):
     #a_bulge = a_hernquist(0.7, x, y, z, 1.4E10)
-    a_bulge = a_hernquist(0.7, x, y, z, 1E10)
-    #a_disk = a_mn(0.638, 1.7, x, y, z, 5.78E10)
-    a_disk = a_mn(3.5, 0.53, x, y, z, 5.5E10)
+    r = np.sqrt(x**2 + y**2 + z**2)
+    a_hernquist = Hernquist(Mvir=1E10, r=r, a=0.7)
+    # Check the units of G inside profiles
+    a_bulge = a_hernquist()
+
+    a_mn = MN(Mdisk=5.5E10, a=3.5, b=0.53, r=r, z=z)
+    # Check if r is spherical or cylindrical
+    a_disk = a_mn()
+
     ax = a_bulge[0] + a_disk[0]
     ay = a_bulge[1] + a_disk[1]
     az = a_bulge[2] + a_disk[2]
+
     return ax, ay, az
 
 def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s, disk=0):
     """
     Orbit integrator around a Hernquist potential using the
-    leapfdrog algorithm.
+    leapfrog integrator.
 
     Input:
     ------
@@ -130,7 +147,7 @@ def integrate_hern(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, Mass, R_s, disk=0):
 
     return t, x, y, z, vx, vy, vz
 
-def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt, disk=0, **kwargs):
+def integrate_bfe(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, nmax, lmax, G, Mass, R_s, dt, disk=0, **kwargs):
     """
     Orbit integration function for the BFE methods.
     the time evolution uses a leapfrog algorithm.
@@ -166,7 +183,7 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     Returns:
     --------
 
-    TODO: 
+    TODO:
     --------
     1. Backwards integration.
     2. Combine both the orbit integration functions, the time
@@ -202,34 +219,44 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
     y[0] = y_i
     z[0] = z_i
 
-    vx[0] = vx_i
-    vy[0] = vy_i
-    vz[0] = vz_i
+    vx[0] = vx_i.to(units.kpc/units.Gyr).value
+    vy[0] = vy_i.to(units.kpc/units.Gyr).value
+    vz[0] = vz_i.to(units.kpc/units.Gyr).value
 
     r = np.zeros((1,3))
     r[0] = np.array([x[0], y[0], z[0]])
 
     extract(kwargs)
-    #print(np.shape(Slmc))
-    #print(x_lmc)
-    #print(R_s_lmc)
 
-    if (disk==0):
-        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]
-        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]
-        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]
+    halo = bfe.BFE_fields(r, S, T, rs=R_s, nmax=nmax, lmax=lmax, G=G, M=Mass)
+    # Make sure the arguments are in the right order
+    bfe_acceleration = halo.bfe_acceleration()
+
+    # Change this to bfe
+    ax[0] = -bfe_acceleration[0].value
+    ay[0] = -bfe_acceleration[1].value
+    az[0] = -bfe_acceleration[2].value
+
     if (disk==1):
-        ax[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0] + disk_bulge_a(x[0], y[0], z[0])[0]
-        ay[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1] + disk_bulge_a(x[0], y[0], z[0])[1]
-        az[0] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2] + disk_bulge_a(x[0], y[0], z[0])[2]
+        ax[0] += disk_bulge_a(x[0], y[0], z[0])[0]
+        ay[0] += disk_bulge_a(x[0], y[0], z[0])[1]
+        az[0] += disk_bulge_a(x[0], y[0], z[0])[2]
 
 
     if (LMC==1):
         r_lmc = np.zeros((1,3))
         r_lmc[0] = np.array([x[0]-x_lmc, y[0]-y_lmc, z[0]-z_lmc])
-        ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]
-        ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]
-        az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]
+
+
+        satellite = bfe.BFE_fields(rlmc, S, T, rs=R_s_lmc, nmax=nmax_lmc,
+                lmax=lmax_lmc, G=G, M=Mass_lmc)
+
+        # Make sure the arguments are in the right order
+        sat_acceleration = satellite.bfe_acceleration()
+
+        ax_lmc = -sat_acceleration[0].value
+        ay_lmc = -sat_acceleration[1].value
+        az_lmc = -sat_acceleration[2].value
         ax[0] += ax_lmc
         ay[0] += ay_lmc
         az[0] += az_lmc
@@ -248,21 +275,30 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
 
     r[0] = np.array([x[1], y[1], z[1]])
 
-    if (disk==0):
-        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0]
-        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1]
-        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2]
+    halo = bfe.BFE_fields(r, S, T, rs=R_s, nmax=nmax, lmax=lmax, G=G, M=Mass)
+    # Make sure the arguments are in the right order
+    bfe_acceleration = halo.bfe_acceleration()
+
+    # Change this to bfe
+    ax[1] = -bfe_acceleration[0].value
+    ay[1] = -bfe_acceleration[1].value
+    az[1] = -bfe_acceleration[2].value
 
     if (disk==1):
-        ax[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][0] + disk_bulge_a(x[1], y[1], z[1])[0]
-        ay[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][1] + disk_bulge_a(x[1], y[1], z[1])[1]
-        az[1] = -biff.gradient(r, S, T, G, Mass, R_s)[0][2] + disk_bulge_a(x[1], y[1], z[1])[2]
+        ax[1] += disk_bulge_a(x[1], y[1], z[1])[0]
+        ay[1] += disk_bulge_a(x[1], y[1], z[1])[1]
+        az[1] +- disk_bulge_a(x[1], y[1], z[1])[2]
 
     if (LMC==1):
         r_lmc[0] = np.array([x[1]-x_lmc, y[1]-y_lmc, z[1]-z_lmc])
-        ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]
-        ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]
-        az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]
+        satellite = bfe.BFE_fields(rlmc, S, T, rs=R_s_lmc, nmax=nmax_lmc,
+                lmax=lmax_lmc, G=G ,M=Mass_lmc)
+
+        # Make sure the arguments are in the right order
+        sat_acceleration = satellite.bfe_acceleration()
+        ax_lmc = -sat_acceleration[0].value
+        ay_lmc = -sat_acceleration[1].value
+        az_lmc = -sat_acceleration[2].value
         ax[1] += ax_lmc
         ay[1] += ay_lmc
         az[1] += az_lmc
@@ -280,21 +316,30 @@ def integrate_biff(x_i, y_i, z_i, vx_i, vy_i, vz_i, time, S, T, G, Mass, R_s, dt
         r = np.zeros((1,3))
         r[0] = np.array([x[i], y[i], z[i]])
 
-        if (disk==0):
-            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0]
-            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1]
-            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2]
-            print(ax[i])
+        halo = bfe.BFE_fields(r, S, T, rs=R_s, nmax=nmax, lmax=lmax, G=G, M=Mass)
+        bfe_acceleration = halo.bfe_acceleration()
+
+        # Change this to bfe
+        ax[i] = -bfe_acceleration[0].value
+        ay[i] = -bfe_acceleration[1].value
+        az[i] = -bfe_acceleration[2].value
+
         if (disk==1):
-            ax[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][0] + disk_bulge_a(x[i], y[i], z[i])[0]
-            ay[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][1] + disk_bulge_a(x[i], y[i], z[i])[1]
-            az[i] = -biff.gradient(r, S, T, G, Mass,R_s)[0][2] + disk_bulge_a(x[i], y[i], z[i])[2]
+            ax[i] += disk_bulge_a(x[i], y[i], z[i])[0]
+            ay[i] += disk_bulge_a(x[i], y[i], z[i])[1]
+            az[i] += disk_bulge_a(x[i], y[i], z[i])[2]
 
         if (LMC==1):
             r_lmc[0] = np.array([x[i]-x_lmc, y[i]-y_lmc, z[i]-z_lmc])
-            ax_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][0]
-            ay_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][1]
-            az_lmc = -biff.gradient(r_lmc, Slmc, Tlmc, G, Mass, R_s_lmc)[0][2]
+            satellite = bfe.BFE_fields(rlmc, S, T, rs=R_s_lmc, nmax=nmax_lmc,
+                    lmax=lmax_lmc, G=G ,M=Mass_lmc)
+
+            # Make sure the arguments are in the right order
+            sat_acceleration = satellite.bfe_acceleration()
+
+            ax_lmc = -sat_acceleration[0].value
+            ay_lmc = -sat_acceleration[1].value
+            az_lmc = -sat_acceleration[2].value
             ax[i] += ax_lmc
             ay[i] += ay_lmc
             az[i] += az_lmc
